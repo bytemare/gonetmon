@@ -1,5 +1,5 @@
 // Session object holds the current state of a monitoring session
-package http_sniffer
+package main
 
 import (
 	"bufio"
