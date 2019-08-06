@@ -11,10 +11,11 @@ func main() {
 
 	// IPC channels
 	//comsChan := make(chan coms)
+	dataChan := make(chan dataMsg)
 	syncChan := make(chan int)
 
 	// Run Sniffer/Collector
-	Collector(params, syncChan)
+	Collector(params, dataChan, syncChan)
 
 	// Run monitoring
 	//go Monitor(params, comsChan, syncChan)
