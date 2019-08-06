@@ -1,5 +1,5 @@
 // Params loads and holds configuration for runtime
-package gonetmon
+package main
 
 // Parameters holds the application's parameters it runs on
 type Parameters struct {
@@ -16,7 +16,6 @@ type Parameters struct {
 	DisplayRefresh	int		// Time (seconds) the display will be updated
 	DisplayFormat	string	// Format of result of allowedFormats
 	Output			string	// Output destinations among allowedOutputs
-	HistoryFile		string	// File the Monitor logs its analysis to for local history
 }
 
 // Default values for Parameter object
@@ -28,7 +27,6 @@ const (
 	defDisplayRefresh	=	10
 	defDisplayFormat	=	"plain"
 	defOutput			=	"cli"
-	defHistoryFile		=	"./http-sniffer_history.log"
 )
 
 // LoadParams loads the application's parameters it should run on into an object and returns it
@@ -43,6 +41,5 @@ func LoadParams() *Parameters{
 		DisplayRefresh:	defDisplayRefresh,
 		DisplayFormat:	defDisplayFormat,
 		Output: 		defOutput,
-		HistoryFile:	defHistoryFile,
 	}
 }
