@@ -1,4 +1,4 @@
-package gonetmon
+package main
 
 import (
 	"fmt"
@@ -10,20 +10,20 @@ func main() {
 	params := LoadParams()
 
 	// IPC channels
-	comsChan := make(chan coms)
+	//comsChan := make(chan coms)
 	syncChan := make(chan int)
 
 	// Run Sniffer/Collector
-	go Collector(params, syncChan)
+	Collector(params, syncChan)
 
 	// Run monitoring
-	go Monitor(params, comsChan, syncChan)
+	//go Monitor(params, comsChan, syncChan)
 
 	// Run Interface
-	go Interface(params, comsChan, syncChan)
+	//go Interface(params, comsChan, syncChan)
 
 	// Run display to print result
-	go Display(params, comsChan, syncChan)
+	//go Display(params, comsChan, syncChan)
 
 	// Shutdown
 	fmt.Println("\n Sniffing stopped.")
