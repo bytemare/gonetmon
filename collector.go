@@ -76,11 +76,13 @@ func capturePackets(handle *pcap.Handle) {
 	for packet := range packetSource.Packets() {
 		// Process packet here
 		// fmt.Println(packet)
-		processPacket(packet)
+		sniffHTTP(packet)
 	}
 }
 
-func processPacket(packet gopacket.Packet) {
+// sniffHTTP returns the http payload string if it finds one in the packet
+func sniffHTTP(packet gopacket.Packet) string {
+	var http = ""
 	applicationLayer := packet.ApplicationLayer()
 	if applicationLayer != nil {
 		fmt.Println("Application layer/Payload found.")
@@ -89,9 +91,14 @@ func processPacket(packet gopacket.Packet) {
 		// Search for a string inside the payload
 		if strings.Contains(string(applicationLayer.Payload()), "HTTP") {
 			fmt.Println("HTTP found!")
+
+			http = string(applicationLayer.Payload())
 		}
 	}
+
+	return http
 }
+
 
 func Collector(parameters *Parameters, syncChan chan int) {
 	devices := findDevices()
