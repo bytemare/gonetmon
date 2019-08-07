@@ -76,13 +76,14 @@ func sniffHTTP(packet gopacket.Packet) bool {
 	var ishttp = false
 	applicationLayer := packet.ApplicationLayer()
 	if applicationLayer != nil {
-
 		payload := applicationLayer.Payload()
 		if strings.Contains(string(payload), "HTTP") {
+			/*
 			fmt.Print("HTTP found!\n")
 			fmt.Printf("\t     Payload : '%s'\n", payload)
 			fmt.Printf("\t     Packet Data : '%s'\n", string(packet.Data()))
 			fmt.Printf("%s%s\n", strings.Repeat("=", 20), strings.Repeat("\n", 4))
+			 */
 			ishttp = true
 		}
 	}
@@ -103,8 +104,8 @@ func capturePackets(handle *pcap.Handle, wg *sync.WaitGroup, dataChan chan<- dat
 					dataChan <- dataMsg{
 						dataType:  dataHTTP,
 						timestamp: time.Now(),
-						device: name,
-						body: string(packet.ApplicationLayer().Payload()),
+						device:    name,
+						payload:   string(packet.ApplicationLayer().Payload()),
 					}
 				}
 	}
