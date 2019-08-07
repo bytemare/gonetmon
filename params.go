@@ -23,6 +23,8 @@ const (
 	defAlertThreshold	=	500
 	defDisplayRefresh	=	10
 	defDisplayType		=	"console"
+
+	defAlertFormat		=	"High traffic generated an alert - hits = %d, triggered at %s"
 )
 
 // LoadParams loads the application's parameters it should run on into an object and returns it
