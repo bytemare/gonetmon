@@ -5,6 +5,7 @@ package main
 type Parameters struct {
 
 	// Raw data parameters
+	Filter			string	// BPF filter to filter traffic sniffing
 	CollectorFile	string 	// File the Collector dumps data in, and the Monitor reads from
 
 	// Analysis related parameters
@@ -20,8 +21,9 @@ type Parameters struct {
 
 // Default values for Parameter object
 const (
+	defFilter			=	"tcp and port 80"
 	defCollectorFile	=	"./gonetmon.dump"
-	defProbePeriod =	1
+	defProbePeriod 		=	1
 	defAlertSpan		=	120
 	defAlertThreshold	=	500
 	defDisplayRefresh	=	10
