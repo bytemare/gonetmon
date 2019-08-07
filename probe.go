@@ -7,11 +7,14 @@ import (
 
 type Probe []string
 
+/*
 func (p *Probe) decompose() (*HitSet, error) {
 	// 1. Parse
 	// 2. decompose into logEntry
 	// 3. append to hitset
 }
+
+ */
 
 func NewProbe(s *Session) (*Probe, error) {
 
@@ -35,7 +38,8 @@ func NewProbe(s *Session) (*Probe, error) {
 	s.offset = size
 	s.alertWatcher.push(len(lines))
 
-	return &Probe(lines), nil
+	//return &Probe(lines), nil
+	return nil, nil
 }
 
 

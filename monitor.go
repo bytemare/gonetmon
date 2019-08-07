@@ -59,7 +59,7 @@ A report is the result of analysis about probes
 
 
 
-func Monitor(parameters *Parameters, displayChan chan struct{}, logsChan chan logs, syncChan chan int) {
+func Monitor(parameters *Parameters, displayChan chan struct{}, syncChan chan int) {
 
 	// Start a new monitoring session
 	s := NewSession(parameters)
@@ -86,7 +86,7 @@ func Monitor(parameters *Parameters, displayChan chan struct{}, logsChan chan lo
 			{
 				fmt.Println("[i] tickerReport")
 				fmt.Println("[i] Monitor will report accumulated analyses from last %d seconds ago.", r)
-				displayChan <- s.SendReport(&r)
+				//displayChan <- s.SendReport(&r)
 			}
 
 		// If Ticker reached Probing time
@@ -108,13 +108,13 @@ func Monitor(parameters *Parameters, displayChan chan struct{}, logsChan chan lo
 				// Add new hits to current hitset
 				s.addHits(hitset)
 
-
+				fmt.Printf("time is %s", pt.String())
 				// Check for alert condition
 				if s.alertWatcher.alert {
-					displayChan <- "Red Alert"
+					displayChan <- struct{}{} //"Red Alert"
 				} else {
 					if s.alertWatcher.toggled {
-						displayChan <- "Orange Recovery"
+						displayChan <- struct{}{} //"Orange Recovery"
 					}
 				}
 

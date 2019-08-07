@@ -2,7 +2,7 @@
 // TODO : interfaces serve here as generic type. maybe find something more elegant
 // TODO : add logic to ensure that the list never exceeds maximum length (e.g. if max is 10, but we somehow have 12 elements, pop until we reach max)
 // TODO : maybe use an interface for HitQueue and Probes ?
-package http_sniffer
+package main
 
 import (
 	"container/list"

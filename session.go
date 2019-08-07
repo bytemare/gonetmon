@@ -5,14 +5,13 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"time"
 )
 
 
 type Session struct {
 	alertWatcher 	*HitQueue
-	hits			[]*HitSet
-	report   		*Report
+	//hits			[]*HitSet
+	//report   		*Report
 	dataFile 		*os.File
 	reader	 		*bufio.Reader
 	offset	 		int64
@@ -22,14 +21,19 @@ func (s *Session) isAlert() bool {
 	return s.alertWatcher.alert
 }
 
+
 func (s *Session) addHits(h *HitSet) {
 	s.hits = append(s.hits, h)
 }
 
+
+/*
 func (s *Session) SendReport(t *time.Time) *Report {
 	// TODO : analyse hitset, generate report and return it
 
 }
+
+ */
 
 func NewSession(parameters *Parameters) *Session {
 
