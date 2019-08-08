@@ -36,7 +36,7 @@ func printDevices(devices []net.Interface) {
 
 // openDevice opens a live listener on the interface designated by the device parameter and returns a corresponding handle
 func openDevice(device net.Interface) *pcap.Handle {
-	handle, err := pcap.OpenLive(device.Name, snapshot_len, promiscuous, timeout)
+	handle, err := pcap.OpenLive(device.Name, snapshotLen, promiscuous, timeout)
 	if err != nil {
 		log.Fatal(err)
 	}
