@@ -14,10 +14,10 @@ func main() {
 	// IPCs
 	//wg := sync.WaitGroup{}
 	var nbReceivers = 1
-	dataChan 	:= make(chan dataMsg, 1000)
-	reportChan	:= make(chan reportMsg, 1)
-	alertChan	:= make(chan alertMsg, 1)
-	syncChan 	:= make(chan struct{})
+	dataChan := make(chan dataMsg, 1000)
+	reportChan := make(chan reportMsg, 1)
+	alertChan := make(chan alertMsg, 1)
+	syncChan := make(chan struct{})
 
 	// Run Sniffer/Collector
 	//wg.Add(1)

@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	snapshot_len int32  = 1024
-	promiscuous  bool   = false
+	snapshot_len int32         = 1024
+	promiscuous  bool          = false
 	timeout      time.Duration = 10 * time.Second
 )
 
@@ -37,7 +37,9 @@ func printDevices(devices []net.Interface) {
 // openDevice opens a live listener on the interface designated by the device parameter and returns a corresponding handle
 func openDevice(device net.Interface) *pcap.Handle {
 	handle, err := pcap.OpenLive(device.Name, snapshot_len, promiscuous, timeout)
-	if err != nil {log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	//defer handle.Close()
 	return handle
 }
@@ -79,11 +81,11 @@ func sniffHTTP(packet gopacket.Packet) bool {
 		payload := applicationLayer.Payload()
 		if strings.Contains(string(payload), "HTTP") {
 			/*
-			fmt.Print("HTTP found!\n")
-			fmt.Printf("\t     Payload : '%s'\n", payload)
-			fmt.Printf("\t     Packet Data : '%s'\n", string(packet.Data()))
-			fmt.Printf("%s%s\n", strings.Repeat("=", 20), strings.Repeat("\n", 4))
-			 */
+				fmt.Print("HTTP found!\n")
+				fmt.Printf("\t     Payload : '%s'\n", payload)
+				fmt.Printf("\t     Packet Data : '%s'\n", string(packet.Data()))
+				fmt.Printf("%s%s\n", strings.Repeat("=", 20), strings.Repeat("\n", 4))
+			*/
 			ishttp = true
 		}
 	}
@@ -100,19 +102,18 @@ func capturePackets(handle *pcap.Handle, wg *sync.WaitGroup, dataChan chan<- dat
 
 	// This will loop on a channel that will send packages, and will quit when the handle is closed by another caller
 	for packet := range packetSource.Packets() {
-				if sniffHTTP(packet) {
-					dataChan <- dataMsg{
-						dataType:  dataHTTP,
-						timestamp: time.Now(),
-						device:    name,
-						payload:   string(packet.ApplicationLayer().Payload()),
-					}
-				}
+		if sniffHTTP(packet) {
+			dataChan <- dataMsg{
+				dataType:  dataHTTP,
+				timestamp: time.Now(),
+				device:    name,
+				payload:   string(packet.ApplicationLayer().Payload()),
+			}
+		}
 	}
 
 	fmt.Printf("Stop listening on %s\n", name)
 }
-
 
 // Collector listens on all network devices for relevant traffic and sends packets to dataChan
 func Collector(parameters *Parameters, dataChan chan dataMsg, syncChan <-chan struct{}) {

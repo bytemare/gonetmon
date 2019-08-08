@@ -6,12 +6,12 @@ import (
 )
 
 // Monitor is a goroutine that listen on the dataChan channel to pull datapackets for analysis
-func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- reportMsg, alertChan chan<- alertMsg, syncChan <-chan struct{}){
+func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- reportMsg, alertChan chan<- alertMsg, syncChan <-chan struct{}) {
 
 	// Start a new monitoring session
-	report 	:= NewReport()
+	report := NewReport()
 	session := session{
-		report:       report,
+		report: report,
 		watcher: WatchDog{
 			//set:       cache.New(parameters.AlertSpan*time.Second, parameters.AlertSpan*time.Second),
 			threshold: parameters.AlertThreshold,
@@ -24,7 +24,7 @@ func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- 
 	// Set up ticker to regularly send reports to display
 	tickerReport := time.NewTicker(time.Second * time.Duration(parameters.DisplayRefresh))
 
-	monitorloop:
+monitorloop:
 	for {
 		select {
 
@@ -65,8 +65,6 @@ func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- 
 
 			}
 		}
-
-
 
 	}
 }

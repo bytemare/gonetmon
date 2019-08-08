@@ -10,24 +10,21 @@ type dataMsg struct {
 }
 
 type reportMsg struct {
-	report		Report	// Message body to display
-	timestamp	time.Time
+	report    Report // Message body to display
+	timestamp time.Time
 }
-
 
 type alertMsg struct {
-	recovery	bool	// True if we recover from alert to no alert, false if not
-	body		string	// Message to display
-	timestamp	time.Time
+	recovery  bool   // True if we recover from alert to no alert, false if not
+	body      string // Message to display
+	timestamp time.Time
 }
-
 
 const (
 	// dataTypes
-	dataHTTP	= "http"
+	dataHTTP = "http"
 
 	// reportTypes
-	reportAnalysis	= 1
-	reportAlarm		= 2
+	reportAnalysis = 1
+	reportAlarm    = 2
 )
-

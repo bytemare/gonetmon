@@ -2,17 +2,14 @@ package main
 
 import "fmt"
 
-
-
-func outputReport(r *reportMsg, output string){
+func outputReport(r *reportMsg, output string) {
 	// TODO
 	fmt.Printf("[i] Display received a report to '%s' : '%s' !\n", output, reportMsg{})
 }
 
+func Display(parameters *Parameters, reportChan <-chan reportMsg, alertChan <-chan alertMsg, syncChan <-chan struct{}) {
 
-func Display(parameters *Parameters, reportChan <-chan reportMsg, alertChan <-chan alertMsg, syncChan <-chan struct{}){
-
-	displayloop:
+displayloop:
 	for {
 
 		select {

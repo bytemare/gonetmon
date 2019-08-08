@@ -11,42 +11,37 @@ import (
 	"time"
 )
 
-
-
 type WatchDog struct {
 	// TODO : implement new aggregator and alarm system that is time based, this Cache is maybe overkill
-	set			*cache.Cache	// time-based cache
-	threshold	int 			// threshold for alert
-	alert		bool 			// last known state of alert
-	toggled		bool			// flag indicating if there was a change of state in alert
+	set       *cache.Cache // time-based cache
+	threshold int          // threshold for alert
+	alert     bool         // last known state of alert
+	toggled   bool         // flag indicating if there was a change of state in alert
 }
 
-
 type session struct {
-	report		*Report		// Current report
-	watcher		WatchDog	// Surveil traffic behaviour and raise alert is need
-	alert		bool		// Current alert status
+	report  *Report  // Current report
+	watcher WatchDog // Surveil traffic behaviour and raise alert is need
+	alert   bool     // Current alert status
 }
 
 type httpPacket struct {
-	messageType		string	// Either request or response
-	device			string	// Interface on which the packet was recorded
+	messageType string // Either request or response
+	device      string // Interface on which the packet was recorded
 
 	//TODO somehow integrate interfaces in the stats
 
 	// Request information
-	request			*http.Request
+	request *http.Request
 
 	// Response information
-	response		*http.Response
+	response *http.Response
 }
 
-
 const (
-	httpResponse	= "response"
-	httpRequest		= "request"
+	httpResponse = "response"
+	httpRequest  = "request"
 )
-
 
 func buildAlertMsg(w *WatchDog) alertMsg {
 	return alertMsg{
@@ -60,8 +55,6 @@ func buildAlertMsg(w *WatchDog) alertMsg {
 func (w *WatchDog) Hits() int {
 	return w.set.ItemCount()
 }
-
-
 
 func readRequest(b *bufio.Reader) (*http.Request, error) {
 	req, err := http.ReadRequest(b)
@@ -78,8 +71,6 @@ func readRequest(b *bufio.Reader) (*http.Request, error) {
 
 	return req, nil
 }
-
-
 
 func readResponse(b *bufio.Reader) (*http.Response, error) {
 
@@ -100,8 +91,6 @@ func readResponse(b *bufio.Reader) (*http.Response, error) {
 	return resp, nil
 }
 
-
-
 // Transforms the raw payload into a httpPacket struct.
 // returns nil wth an error if data does not contain a valid http payload
 // TODO : implement fail and error if data is not valid http payload
@@ -117,7 +106,7 @@ func dataToHTTP(data dataMsg) (*httpPacket, error) {
 
 	packet := &httpPacket{
 		messageType: "",
-		device:		 data.device,
+		device:      data.device,
 		request:     nil,
 		response:    nil,
 	}
@@ -136,12 +125,12 @@ func dataToHTTP(data dataMsg) (*httpPacket, error) {
 
 	response, err := readResponse(bufreader)
 
-	retry:
+retry:
 	for err != nil {
 
 		fmt.Printf("Response :\n%s\n", data.payload)
 
-		if strings.HasPrefix(data.payload, "HTTP/1.1 "){
+		if strings.HasPrefix(data.payload, "HTTP/1.1 ") {
 			fmt.Printf("match\n")
 			strings.Replace(data.payload, "HTTP/1.1 ", "\n", 1)
 			fmt.Printf("New response :\n%s\n", data.payload)

@@ -19,7 +19,7 @@ func command(syncChan chan<- struct{}, nbReceivers int) {
 
 	for sig := range sigs {
 		fmt.Println("command received signal :", sig.String())
-		for n := 0; n < nbReceivers ; n++ {
+		for n := 0; n < nbReceivers; n++ {
 			syncChan <- struct{}{}
 		}
 		break
