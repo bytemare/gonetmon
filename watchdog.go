@@ -109,7 +109,7 @@ func (w *Watchdog) evict(now time.Time) {
 	for {
 
 		if w.cache.list.Len() <= 0 {
-			return
+			break
 		}
 
 		e := w.cache.list.Front()
@@ -158,7 +158,7 @@ func NewWatchdog(window time.Duration, tick time.Duration, threshold uint, c cha
 			select {
 
 			// Synchronisation/Exit trigger
-			case <- stop:
+			case <-stop:
 				wg.Done()
 
 			// Continuously evict old elements
