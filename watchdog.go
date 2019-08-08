@@ -106,11 +106,12 @@ func (w *Watchdog) verify() {
 func (w *Watchdog) evict(now time.Time) {
 	defer w.verify()
 
-	if w.cache.list.Len() <= 0 {
-		return
-	}
-
 	for {
+
+		if w.cache.list.Len() <= 0 {
+			return
+		}
+
 		e := w.cache.list.Front()
 
 		// If the element is older than allowed window
