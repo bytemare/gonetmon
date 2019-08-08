@@ -14,17 +14,8 @@
 
 ### Remain
 
-- Parsing : Response header parsing somehow fails
-- Alert logic
-    - Time based LRU cache of hits
-    - dedicated go routine with ticker to evict elements : but what about concurrency accessing/modifying the elements ?
-        - go through first elements and discard every element that has expired
-    - hits on timespan = number of element in the list
-    - at each tick, verify if alert is triggered : if there's a change of state, alert, if recovering, inform.
-        - if we were already in alert, don't alert again or it will flood the display
 - Proper synchronisation for graceful shutdown
 - Clean display and colors
-
 
 ### Error handling
 
