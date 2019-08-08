@@ -3,7 +3,7 @@ package main
 import "time"
 import "github.com/jinzhu/copier"
 
-type SectionStats struct {
+type sectionStats struct {
 	domain  string
 	section string
 	nbHits  int
@@ -13,20 +13,21 @@ type SectionStats struct {
 	nbErrs  int
 }
 
-type DomainStats struct {
+type domainStats struct {
 	domain    string
 	nbResults int
-	stats     []*SectionStats
+	stats     []*sectionStats
 }
 
-type Analysis struct {
+type analysis struct {
 	nbDomains int
-	stats     []*DomainStats
+	stats     []*domainStats
 }
 
+// Report holds the packets and the result of a recording window
 type Report struct {
 	packets  []*httpPacket // A set of packets to be analysed
-	analysis Analysis      // Final analysis of data
+	analysis analysis      // Final analysis of data
 }
 
 // addPacket adds a packet to the report
@@ -51,9 +52,10 @@ func buildReportMsg(r *Report) reportMsg {
 	return msg
 }
 
+// Returns a new and empty Report struct
 func NewReport() *Report {
 	return &Report{
 		packets:  nil,
-		analysis: Analysis{},
+		analysis: analysis{},
 	}
 }
