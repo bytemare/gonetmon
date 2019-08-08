@@ -14,6 +14,7 @@
 
 ### Remain
 
+- Parsing : Response header parsing somehow fails
 - Alert logic
     - Time based LRU cache of hits
     - dedicated go routine with ticker to evict elements : but what about concurrency accessing/modifying the elements ?
