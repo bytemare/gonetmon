@@ -26,11 +26,11 @@
 - Clean display and colors
 
 
-## Error handling
+### Error handling
 
 - Thoroughly check if all errors are handled 
 
-## Other Todo
+### Other Todo
 
 - [ ] Tests :
     - Platforms
@@ -44,7 +44,8 @@
         - [ ] Tailor specific requests to trigger hit detection and alerts
 
 - [ ] Code quality
-    - 
+    - [ ] goreportcard
     - [ ] Codacy
     - [ ] Sonar
 - [ ] Vulnerability checks
+    - [ ] Snyk
