@@ -2,22 +2,18 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
 // Monitor is a goroutine that listen on the dataChan channel to pull datapackets for analysis
-func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- reportMsg, alertChan chan<- alertMsg, syncChan <-chan struct{}) {
+func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- reportMsg, alertChan chan<- alertMsg, syncChan <-chan struct{}, wg *sync.WaitGroup) {
 
 	// Start a new monitoring session
 	report := NewReport()
 	session := session{
 		report: report,
-		watcher: WatchDog{
-			//set:       cache.New(parameters.AlertSpan*time.Second, parameters.AlertSpan*time.Second),
-			threshold: parameters.AlertThreshold,
-			alert:     false,
-			toggled:   false,
-		},
+		watchdog: NewWatchdog(parameters.AlertSpan, defaultTick, parameters.AlertThreshold, alertChan, defaultBufSize, syncChan, wg),
 		alert: false,
 	}
 
@@ -56,13 +52,7 @@ monitorloop:
 				report.addPacket(packet)
 
 				// Update Watchdog
-				//_ = session.watcher.set.Add(ivalidkey, 1)
-
-				// Check if alert is triggered and report if needed
-				if session.watcher.alert || session.watcher.toggled {
-					alertChan <- buildAlertMsg(&session.watcher) //"Red Alert" or "Orange Recovery"
-				}
-
+				session.watchdog.addHit(data.timestamp)
 			}
 		}
 

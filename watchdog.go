@@ -9,6 +9,7 @@ import (
 
 const (
 	defaultTick		= 500 * time.Millisecond
+	defaultBufSize	= 1000
 )
 
 type HitCache struct {
@@ -156,14 +157,14 @@ func NewWatchdog(window time.Duration, tick time.Duration, threshold uint, c cha
 
 			// Continuously evict old elements
 			case t := <-ticker.C:
-				dog.Evict(t)
+				dog.evict(t)
 
 			// Push request
 			case p := <-dog.cache.push:
 				dog.cache.list.PushBack(p)
 				dog.cache.size++
 
-				dog.Verify()
+				dog.verify()
 			}
 		}
 	}()

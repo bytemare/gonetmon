@@ -1,6 +1,8 @@
 // Params loads and holds configuration for runtime
 package main
 
+import "time"
+
 // Parameters holds the application's parameters it runs on
 type Parameters struct {
 
@@ -8,8 +10,8 @@ type Parameters struct {
 	Filter string // BPF filter to filter traffic sniffing
 
 	// Analysis related parameters
-	AlertSpan      int // Time (seconds) span to monitor for alert trigger
-	AlertThreshold int // Traffic (hits/span) threshold triggering an alert
+	AlertSpan      time.Duration // Time (seconds) span to monitor for alert trigger
+	AlertThreshold uint // Traffic (hits/span) threshold triggering an alert
 
 	// Display related parameters
 	DisplayRefresh int    // Time (seconds) the display will be updated
@@ -19,11 +21,12 @@ type Parameters struct {
 // Default values for Parameter object
 const (
 	defFilter         = "tcp and port 80"
-	defAlertSpan      = 120
+	defAlertSpan      = 120 * time.Second
 	defAlertThreshold = 500
 	defDisplayRefresh = 10
 	defDisplayType    = "console"
 
+	defRecoveryFormat = "Alert recovered at %s"
 	defAlertFormat = "High traffic generated an alert - hits = %d, triggered at %s"
 )
 

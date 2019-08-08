@@ -4,24 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/patrickmn/go-cache"
 	"io"
 	"net/http"
 	"strings"
-	"time"
 )
-
-type WatchDog struct {
-	// TODO : implement new aggregator and alarm system that is time based, this Cache is maybe overkill
-	set       *cache.Cache // time-based cache
-	threshold int          // threshold for alert
-	alert     bool         // last known state of alert
-	toggled   bool         // flag indicating if there was a change of state in alert
-}
 
 type session struct {
 	report  *Report  // Current report
-	watcher WatchDog // Surveil traffic behaviour and raise alert is need
+	watchdog *Watchdog // Surveil traffic behaviour and raise alert is need
 	alert   bool     // Current alert status
 }
 
@@ -42,19 +32,6 @@ const (
 	httpResponse = "response"
 	httpRequest  = "request"
 )
-
-func buildAlertMsg(w *WatchDog) alertMsg {
-	return alertMsg{
-		recovery:  !w.alert && w.toggled, // If there is no alert and the value was toggled, we're recovering
-		body:      fmt.Sprintf(defAlertFormat, w.Hits(), time.Now().String()),
-		timestamp: time.Now(),
-	}
-}
-
-// Returns the number of hits over the recorder time span
-func (w *WatchDog) Hits() int {
-	return w.set.ItemCount()
-}
 
 func readRequest(b *bufio.Reader) (*http.Request, error) {
 	req, err := http.ReadRequest(b)
