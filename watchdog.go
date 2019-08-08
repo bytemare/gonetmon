@@ -12,7 +12,7 @@ const (
 	defaultBufSize = 1000
 )
 
-type HitCache struct {
+type hitCache struct {
 
 	// Channels to send operations on
 	push    chan time.Time
@@ -25,10 +25,11 @@ type HitCache struct {
 	size uint
 }
 
+// Watchdog struct holds fifo LRU time-based cache and information necessary to watch for traffic spike
 type Watchdog struct {
 
 	// Cache to store timely identified hits and time window to keep them
-	cache  HitCache
+	cache  hitCache
 	window time.Duration
 	tick   time.Duration
 
@@ -46,6 +47,7 @@ type Watchdog struct {
 	wg   *sync.WaitGroup
 }
 
+// Hits returns the current number of elements in the cache
 func (w *Watchdog) Hits() int {
 	return int(w.cache.size)
 }
@@ -68,7 +70,7 @@ func buildAlertMsg(w *Watchdog, recovery bool, t time.Time) alertMsg {
 }
 
 // addHit adds an element to the cache by sending a push request to the goroutine
-func (w *Watchdog) addHit(t time.Time) {
+func (w *Watchdog) AddHit(t time.Time) {
 	w.cache.push <- t
 }
 
@@ -124,8 +126,11 @@ func (w *Watchdog) evict(now time.Time) {
 
 // NewWatchdog returns a watchdog struct and launches a goroutine that will observe its cache to detect alert triggering
 func NewWatchdog(window time.Duration, tick time.Duration, threshold uint, c chan<- alertMsg, bufSize uint, stop <-chan struct{}, wg *sync.WaitGroup) *Watchdog {
+
+	wg.Add(1)
+
 	dog := Watchdog{
-		cache: HitCache{
+		cache: hitCache{
 			push:    make(chan time.Time, bufSize),
 			bufSize: bufSize,
 			list:    list.List{},
@@ -150,6 +155,10 @@ func NewWatchdog(window time.Duration, tick time.Duration, threshold uint, c cha
 	go func() {
 		for {
 			select {
+
+			// Synchronisation/Exit trigger
+			case <- stop:
+				wg.Done()
 
 			// Continuously evict old elements
 			case t := <-ticker.C:
