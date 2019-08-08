@@ -55,13 +55,13 @@ func readResponse(b *bufio.Reader) (*http.Response, error) {
 
 	if err == io.EOF {
 		// TODO : this should not happen, handle anyway
-		fmt.Printf("Response reading : EOF\n")
+		fmt.Printf("We have an error in an HTTP response packet : %s\n", err)
 		return nil, err
 	}
 
 	if err != nil {
 		// TODO :handle error
-		fmt.Printf("We have an error in respinse : %s\n", err)
+		fmt.Printf("We have an error in an HTTP response packet : %s\n", err)
 		return nil, err
 	}
 
@@ -71,15 +71,12 @@ func readResponse(b *bufio.Reader) (*http.Response, error) {
 // Transforms the raw payload into a httpPacket struct.
 // returns nil wth an error if data does not contain a valid http payload
 // TODO : implement fail and error if data is not valid http payload
-func dataToHTTP(data dataMsg) (*httpPacket, error) {
+func DataToHTTP(data dataMsg) (*httpPacket, error) {
 
+	// In order to use the /net/http functions to interpret http packets,
+	// we have to present *bufio.Reader containing the payload
 	b := []byte(data.payload)
-
-	ioreader := bytes.NewReader(b)
-
-	bufreader := bufio.NewReader(ioreader)
-
-	//r := bufio.NewReader(bytes.NewReader(packet.ApplicationLayer().Payload()))
+	bufReader := bufio.NewReader(bytes.NewReader(b))
 
 	packet := &httpPacket{
 		messageType: "",
@@ -88,44 +85,33 @@ func dataToHTTP(data dataMsg) (*httpPacket, error) {
 		response:    nil,
 	}
 
-	request, _ := readRequest(bufreader)
+	// If it is a Response, it starts with 'HTTP'
+	if strings.HasPrefix(data.payload, "HTTP/") {
 
-	if request != nil {
-		fmt.Printf("We have a request ! => '%s'\n\n", request)
-		packet.messageType = httpRequest
-		packet.request = request
+		response, err := readResponse(bufReader)
 
-		return packet, nil
-	}
+		if response != nil {
+			//fmt.Printf("We have a response ! => '%s'\n\n", response)
+			packet.messageType = httpResponse
+			packet.response = response
 
-	// If the data is not a request, we might have a response Header
+			return packet, nil
+		}
 
-	response, err := readResponse(bufreader)
+		return nil, err
 
-retry:
-	for err != nil {
+	} else {
+		// If not, it may be a Request
+		request, err := readRequest(bufReader)
 
-		fmt.Printf("Response :\n%s\n", data.payload)
+		if request != nil {
+			//fmt.Printf("We have a request ! => '%s'\n\n", request)
+			packet.messageType = httpRequest
+			packet.request = request
 
-		if strings.HasPrefix(data.payload, "HTTP/1.1 ") {
-			fmt.Printf("match\n")
-			strings.Replace(data.payload, "HTTP/1.1 ", "\n", 1)
-			fmt.Printf("New response :\n%s\n", data.payload)
-			response, _ := readResponse(bufio.NewReader(bytes.NewReader([]byte(data.payload))))
-
-			if response != nil {
-				break retry
-			}
+			return packet, nil
 		}
 
 		return nil, err
 	}
-
-	if response != nil {
-		fmt.Printf("We have a response ! => '%s'\n\n", response)
-		packet.messageType = httpResponse
-		packet.response = response
-	}
-
-	return packet, nil
 }
