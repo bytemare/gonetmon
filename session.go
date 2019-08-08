@@ -10,9 +10,9 @@ import (
 )
 
 type session struct {
-	report  *Report  // Current report
+	report   *Report   // Current report
 	watchdog *Watchdog // Surveil traffic behaviour and raise alert is need
-	alert   bool     // Current alert status
+	alert    bool      // Current alert status
 }
 
 type httpPacket struct {

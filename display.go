@@ -4,7 +4,7 @@ import "fmt"
 
 func outputReport(r *reportMsg, output string) {
 	// TODO
-	fmt.Printf("[i] Display received a report to '%s' : '%s' !\n", output, reportMsg{})
+	fmt.Printf("[i] Display received a report to '%s' : '%s' !\n", output, r)
 }
 
 func Display(parameters *Parameters, reportChan <-chan reportMsg, alertChan <-chan alertMsg, syncChan <-chan struct{}) {

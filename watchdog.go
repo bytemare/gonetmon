@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	defaultTick		= 500 * time.Millisecond
-	defaultBufSize	= 1000
+	defaultTick    = 500 * time.Millisecond
+	defaultBufSize = 1000
 )
 
 type HitCache struct {
@@ -19,34 +19,34 @@ type HitCache struct {
 	bufSize uint // size of channels
 
 	// Doubly linked list
-	list		list.List
+	list list.List
 
 	// Number of elements in current list
-	size		uint
+	size uint
 }
 
 type Watchdog struct {
-	
+
 	// Cache to store timely identified hits and time window to keep them
-	cache		HitCache
-	window		time.Duration
-	tick		time.Duration
-	
+	cache  HitCache
+	window time.Duration
+	tick   time.Duration
+
 	// Threshold above which an alert will be raised
-	threshold	uint
-	
+	threshold uint
+
 	// Channel to send alerts to
-	alertChan	chan<-	alertMsg
-	
+	alertChan chan<- alertMsg
+
 	// Current state of alert
-	alert		bool
+	alert bool
 
 	// Synchronisation
-	stop		<-chan	struct{}
-	wg			*sync.WaitGroup
+	stop <-chan struct{}
+	wg   *sync.WaitGroup
 }
 
-func (w *Watchdog) Hits() int{
+func (w *Watchdog) Hits() int {
 	return int(w.cache.size)
 }
 
@@ -72,8 +72,6 @@ func (w *Watchdog) addHit(t time.Time) {
 	w.cache.push <- t
 }
 
-
-
 // Verify checks the cache, raising or lowering the alert and sending a message if necessary
 func (w *Watchdog) verify() {
 
@@ -89,8 +87,8 @@ func (w *Watchdog) verify() {
 
 	// New Alert
 	if w.cache.size >= w.threshold && !w.alert {
-			w.alert = true
-			w.alertChan <- buildAlertMsg(w, false, time.Now())
+		w.alert = true
+		w.alertChan <- buildAlertMsg(w, false, time.Now())
 	} else {
 		// Recovery
 		if w.alert {
@@ -103,7 +101,7 @@ func (w *Watchdog) verify() {
 }
 
 // Evict pops all values from the cache that have passed the authorised window
-func (w *Watchdog) evict(now time.Time){
+func (w *Watchdog) evict(now time.Time) {
 	defer w.verify()
 
 	if w.cache.list.Len() <= 0 {
@@ -124,7 +122,6 @@ func (w *Watchdog) evict(now time.Time){
 	}
 }
 
-
 // NewWatchdog returns a watchdog struct and launches a goroutine that will observe its cache to detect alert triggering
 func NewWatchdog(window time.Duration, tick time.Duration, threshold uint, c chan<- alertMsg, bufSize uint, stop <-chan struct{}, wg *sync.WaitGroup) *Watchdog {
 	dog := Watchdog{
@@ -135,7 +132,7 @@ func NewWatchdog(window time.Duration, tick time.Duration, threshold uint, c cha
 			size:    0,
 		},
 		window:    window,
-		tick: tick,
+		tick:      tick,
 		threshold: threshold,
 		alertChan: c,
 		alert:     false,
@@ -146,7 +143,6 @@ func NewWatchdog(window time.Duration, tick time.Duration, threshold uint, c cha
 	if tick == 0 {
 		dog.tick = defaultTick
 	}
-
 
 	ticker := time.NewTicker(dog.tick)
 

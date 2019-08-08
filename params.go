@@ -11,7 +11,7 @@ type Parameters struct {
 
 	// Analysis related parameters
 	AlertSpan      time.Duration // Time (seconds) span to monitor for alert trigger
-	AlertThreshold uint // Traffic (hits/span) threshold triggering an alert
+	AlertThreshold uint          // Traffic (hits/span) threshold triggering an alert
 
 	// Display related parameters
 	DisplayRefresh int    // Time (seconds) the display will be updated
@@ -27,7 +27,7 @@ const (
 	defDisplayType    = "console"
 
 	defRecoveryFormat = "Alert recovered at %s"
-	defAlertFormat = "High traffic generated an alert - hits = %d, triggered at %s"
+	defAlertFormat    = "High traffic generated an alert - hits = %d, triggered at %s"
 )
 
 // LoadParams loads the application's parameters it should run on into an object and returns it

@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	snapshot_len int32         = 1024
-	promiscuous  bool          = false
-	timeout      time.Duration = 10 * time.Second
+	snapshotLen int32         = 1024
+	promiscuous bool          = false
+	timeout     time.Duration = 10 * time.Second
 )
 
 // findDevices gathers the list of interfaces of the machine

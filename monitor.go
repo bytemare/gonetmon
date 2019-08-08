@@ -12,9 +12,9 @@ func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- 
 	// Start a new monitoring session
 	report := NewReport()
 	session := session{
-		report: report,
+		report:   report,
 		watchdog: NewWatchdog(parameters.AlertSpan, defaultTick, parameters.AlertThreshold, alertChan, defaultBufSize, syncChan, wg),
-		alert: false,
+		alert:    false,
 	}
 
 	// Set up ticker to regularly send reports to display
