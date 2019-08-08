@@ -9,16 +9,17 @@ func outputReport(r *reportMsg, output string) {
 
 func Display(parameters *Parameters, reportChan <-chan reportMsg, alertChan <-chan alertMsg, syncChan <-chan struct{}) {
 
-displayloop:
+displayLoop:
 	for {
 
 		select {
 
 		case <-syncChan:
 			fmt.Println("[i] Display received sync message")
-			break displayloop
+			break displayLoop
 
 		case alert := <-alertChan:
+
 			fmt.Printf("[ALERT] %s\n", alert.body)
 
 		case report := <-reportChan:
