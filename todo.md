@@ -8,8 +8,8 @@
         - [x] TCP and port 80
 - [x] Time based console display with traffic information
     - [ ] Most hits on website sections
-- [ ] Alert when traffic over past n minutes hits a threshold
-    - [ ] Inform when recovered
+- [x] Alert when traffic over past n minutes hits a threshold
+    - [x] Inform when recovered
 - [ ] Tests
 
 ### Remain
