@@ -173,8 +173,8 @@ func sniffApplicationLayer(packet gopacket.Packet, filter string) bool {
 }
 
 // capturePacket continuously listens to a device interface managed by handle, and extracts relevant packets from traffic
-// to send it to dataChan
-func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, dataChan chan<- packetMsg, name string) {
+// to send it to packetChan
+func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, packetChan chan<- packetMsg, name string) {
 	defer wg.Done()
 
 	log.Info("Capturing packets on ", name)
@@ -184,7 +184,7 @@ func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, dat
 	// This will loop on a channel that will send packages, and will quit when the handle is closed by another caller
 	for packet := range packetSource.Packets() {
 		if sniffApplicationLayer(packet, filter.Application) {
-			dataChan <- packetMsg{
+			packetChan <- packetMsg{
 				dataType:  filter.Type,
 				timestamp: time.Now(),
 				device:    name,
@@ -196,8 +196,8 @@ func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, dat
 	log.Info("Stopping capture on ", name)
 }
 
-// Collector listens on all network devices for relevant traffic and sends packets to dataChan
-func Collector(parameters *Parameters, devices map[string]*pcap.Handle, dataChan chan packetMsg, syncChan <-chan struct{}, syncwg *sync.WaitGroup) {
+// Collector listens on all network devices for relevant traffic and sends packets to packetChan
+func Collector(parameters *Parameters, devices map[string]*pcap.Handle, packetChan chan packetMsg, syncChan <-chan struct{}, syncwg *sync.WaitGroup) {
 
 	wg := sync.WaitGroup{}
 
@@ -210,7 +210,7 @@ func Collector(parameters *Parameters, devices map[string]*pcap.Handle, dataChan
 			}).Error("Could not set filter on device. Closing.")
 			closeDevice(h)
 		}
-		go capturePackets(h, &parameters.PacketFilter, &wg, dataChan, dev)
+		go capturePackets(h, &parameters.PacketFilter, &wg, packetChan, dev)
 	}
 
 	// Wait until sync to stop
