@@ -13,8 +13,10 @@ os:
 dist: trusty
 
 
-
 addons:
+  apt:
+    packages:
+      - libpcap-dev
   sonarcloud:
     organization: "bytemare-github"
     token:
