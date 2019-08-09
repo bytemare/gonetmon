@@ -174,7 +174,7 @@ func sniffApplicationLayer(packet gopacket.Packet, filter string) bool {
 
 // capturePacket continuously listens to a device interface managed by handle, and extracts relevant packets from traffic
 // to send it to dataChan
-func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, dataChan chan<- dataMsg, name string) {
+func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, dataChan chan<- packetMsg, name string) {
 	defer wg.Done()
 
 	log.Info("Capturing packets on ", name)
@@ -184,11 +184,11 @@ func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, dat
 	// This will loop on a channel that will send packages, and will quit when the handle is closed by another caller
 	for packet := range packetSource.Packets() {
 		if sniffApplicationLayer(packet, filter.Application) {
-			dataChan <- dataMsg{
+			dataChan <- packetMsg{
 				dataType:  filter.Type,
 				timestamp: time.Now(),
 				device:    name,
-				payload:   string(packet.ApplicationLayer().Payload()),
+				rawPacket: packet,
 			}
 		}
 	}
@@ -197,7 +197,7 @@ func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, dat
 }
 
 // Collector listens on all network devices for relevant traffic and sends packets to dataChan
-func Collector(parameters *Parameters, devices map[string]*pcap.Handle, dataChan chan dataMsg, syncChan <-chan struct{}, syncwg *sync.WaitGroup) {
+func Collector(parameters *Parameters, devices map[string]*pcap.Handle, dataChan chan packetMsg, syncChan <-chan struct{}, syncwg *sync.WaitGroup) {
 
 	wg := sync.WaitGroup{}
 

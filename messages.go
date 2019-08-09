@@ -1,11 +1,14 @@
 package main
 
-import "time"
+import (
+	"github.com/google/gopacket"
+	"time"
+)
 
-type dataMsg struct {
+type packetMsg struct {
 	dataType  string // Kind of data, for now just http packet
 	device    string // Interface on which the traffic was recorded
-	payload   string // Actual packet payload
+	rawPacket gopacket.Packet // Actual packet payload
 	timestamp time.Time
 }
 
