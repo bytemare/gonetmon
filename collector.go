@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
 	log "github.com/sirupsen/logrus"
@@ -10,36 +11,118 @@ import (
 	"time"
 )
 
+
+// TODO : don't keep values here
 var (
-	snapshotLen int32         = 1024
-	promiscuous  = false
-	timeout     time.Duration = defDisplayRefresh //10 * time.Second
+	snapshotLen int32 = 1024
+	promiscuous = false
+	timeout = defDisplayRefresh //10 * time.Second
 )
 
-// findDevices gathers the list of interfaces of the machine
-func findDevices() []net.Interface {
-	devs, err := net.Interfaces()
-	// TODO handle error
-	if err != nil {
-		panic(err)
+// InitialiseCapture opens device interfaces and associated handles to listen on, returns a map of these.
+// If the interfaces parameter is not nil, only open those specified.
+func InitialiseCapture(interfaces []string) (map[string]*pcap.Handle, error) {
+
+	var err error
+
+	devices := findDevices(interfaces)
+
+	if devices == nil {
+		return nil, err
 	}
-	return devs
+
+	m := make(map[string]*pcap.Handle)
+	err = nil
+	for _, d := range devices {
+		if h, err := openDevice(d); err != nil {
+			// todo : error
+		} else {
+			m[d.Name] = h
+			log.Info("map len", len(m))
+		}
+	}
+
+	if len(m) == 0 {
+		log.Error("Could not open any device interface.")
+		return nil, errors.New("could not open any device interface")
+	}
+
+	return m, nil
 }
 
-// Print the list of devices
-func printDevices(devices []net.Interface) {
-	for _, f := range devices {
-		log.Info(f.Name)
+// findDevices gathers the list of interfaces of the machine.
+// If the interfaces parameter is not nil, only list those specified if present.
+func findDevices(interfaces []string) []net.Interface {
+	devices, err := net.Interfaces()
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("Error in finding network devices.")
+		return nil
 	}
+
+	if len(devices) == 0 {
+		log.Error("Could not find any network devices (but no error occurred).")
+		return nil
+	}
+
+	// If we want a custom list of interfaces
+	if interfaces != nil {
+		var tailoredList []net.Interface
+
+		interfacesLoop:
+		for _, i := range interfaces {
+
+			for index, d := range devices {
+				if d.Name == i {
+					tailoredList = append(tailoredList, d)
+
+					// Remove the found element from array to avoid it on next iteration
+					// Won't affect current loop since Go uses a copy
+					devices[index] = devices[len(devices)-1]
+					devices = devices[:len(devices)-1]
+
+					log.Info("Found requested interface ", i)
+
+					continue interfacesLoop
+				}
+			}
+
+			// Here, the requested interface is not in the found set
+			log.Error("Could not find requested interface : ", i)
+		}
+
+		if len(tailoredList) == 0 {
+			log.Error("Could not find any requested network devices among : ", interfaces)
+			return nil
+		}
+
+		devices = tailoredList
+	}
+
+	log.Info("Found devices ", len(devices))
+
+	return devices
 }
 
 // openDevice opens a live listener on the interface designated by the device parameter and returns a corresponding handle
-func openDevice(device net.Interface) *pcap.Handle {
+func openDevice(device net.Interface) (*pcap.Handle, error) {
 	handle, err := pcap.OpenLive(device.Name, snapshotLen, promiscuous, timeout)
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{
+			"interface": device.Name,
+			"error": err,
+		}).Error("Could not open device.")
+
+		return nil, err
 	}
-	return handle
+
+	log.WithFields(log.Fields{
+		"interface": device.Name,
+	}).Info("Opened device interface.")
+
+	return handle, nil
 }
 
 // Closes listening on a device
@@ -51,7 +134,10 @@ func closeDevice(h *pcap.Handle) {
 func openDevices(devs []net.Interface) []*pcap.Handle {
 	var handlers []*pcap.Handle
 	for _, d := range devs {
-		handlers = append(handlers, openDevice(d))
+		h, err := openDevice(d)
+		if h != nil && err == nil {
+			handlers = append(handlers, h)
+		}
 	}
 	return handlers
 }
@@ -60,6 +146,14 @@ func openDevices(devs []net.Interface) []*pcap.Handle {
 func closeDevices(handles []*pcap.Handle) {
 	log.Info("Closing devices.")
 	for _, h := range handles {
+		closeDevice(h)
+	}
+}
+
+
+func closeMapDevices(devs map[string]*pcap.Handle) {
+	for d, h := range devs {
+		log.Info("Closing device on interface ", d)
 		closeDevice(h)
 	}
 }
@@ -97,6 +191,8 @@ func sniffHTTP(packet gopacket.Packet) bool {
 func capturePackets(handle *pcap.Handle, wg *sync.WaitGroup, dataChan chan<- dataMsg, name string) {
 	defer wg.Done()
 
+	log.Info("Capturing packets on ", name)
+
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 
 	// This will loop on a channel that will send packages, and will quit when the handle is closed by another caller
@@ -111,32 +207,25 @@ func capturePackets(handle *pcap.Handle, wg *sync.WaitGroup, dataChan chan<- dat
 		}
 	}
 
-	log.Info("Closing capture on ", name)
+	log.Info("Stopping capture on ", name)
 }
 
 // Collector listens on all network devices for relevant traffic and sends packets to dataChan
-func Collector(parameters *Parameters, dataChan chan dataMsg, syncChan <-chan struct{}, syncwg *sync.WaitGroup) {
-
-	devices := findDevices()
-
-	//printDevices(devices)
-
-	handles := openDevices(devices)
+func Collector(parameters *Parameters, devices map[string]*pcap.Handle, dataChan chan dataMsg, syncChan <-chan struct{}, syncwg *sync.WaitGroup) {
 
 	wg := sync.WaitGroup{}
 
-	for i, h := range handles {
-		log.Info("Capturing packets on ", devices[i].Name)
+	for dev, h := range devices {
 		wg.Add(1)
 		addFilter(h, parameters.Filter)
-		go capturePackets(h, &wg, dataChan, devices[i].Name)
+		go capturePackets(h, &wg, dataChan, dev)
 	}
 
 	// Wait until sync to stop
 	<-syncChan
 
 	// Inform goroutines to stop
-	closeDevices(handles)
+	closeMapDevices(devices)
 
 	// Wait for goroutines to stop
 	log.Info("Collector waiting for subs...")

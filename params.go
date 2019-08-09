@@ -8,6 +8,7 @@ type Parameters struct {
 
 	// Raw data parameters
 	Filter string // BPF filter to filter traffic sniffing
+	Interfaces []string // Array of interfaces to specifically listen on. If nil, listen on all devices.
 
 	// Analysis related parameters
 	AlertSpan      time.Duration // Time (seconds) span to monitor for alert trigger
@@ -21,6 +22,7 @@ type Parameters struct {
 // Default values for Parameter object
 const (
 	defFilter         = "tcp and port 80"
+	//defInterfaces     = []string{}
 	defAlertSpan      = 10 * time.Second
 	defAlertThreshold = 4
 	defDisplayRefresh = 2 * time.Second
@@ -35,6 +37,7 @@ func LoadParams() *Parameters {
 	// Todo : There should be a better way of doing this + argument validation
 
 	return &Parameters{
+		Interfaces:		nil,
 		Filter:         defFilter,
 		AlertSpan:      defAlertSpan,
 		AlertThreshold: defAlertThreshold,

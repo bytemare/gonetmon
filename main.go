@@ -11,11 +11,18 @@ func main() {
 	//TODO : do proper prompt to ask for privileges
 	if os.Geteuid() != 0 {
 		log.Fatal("You must run this program with elevated privileges in order to capture traffic. Try running with sudo.")
-		return
 	}
 
 	// Load parameters
 	params := LoadParams()
+
+	// Check whether we can run
+	devices, err := InitialiseCapture(params.Interfaces)
+	if err != nil {
+		log.Fatal("Initialising capture failed. ", err)
+	}
+
+	log.Info("Found devices ", len(devices))
 
 	// IPCs
 	var nbReceivers = 1
@@ -28,7 +35,7 @@ func main() {
 	// Run Sniffer/Collector
 	nbReceivers++
 	wg.Add(1)
-	go Collector(params, dataChan, syncChan, &wg)
+	go Collector(params, devices, dataChan, syncChan, &wg)
 
 	// Run monitoring
 	nbReceivers += 2 // Todo : change that
