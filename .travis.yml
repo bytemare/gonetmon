@@ -10,7 +10,8 @@ os:
   - osx
 
 install:
-  - go get -d -v ./...
+  - go get -d -v
 
 script:
-  - go build -v ./...
+  - go build -v
+  - sudo ./gonetmon
