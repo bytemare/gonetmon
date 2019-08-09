@@ -25,7 +25,7 @@ func main() {
 	// IPCs
 	var nbReceivers = 1
 	var wg sync.WaitGroup
-	dataChan := make(chan dataMsg, 1000)
+	packetChan := make(chan packetMsg, 1000)
 	reportChan := make(chan reportMsg, 1)
 	alertChan := make(chan alertMsg, 1)
 	syncChan := make(chan struct{})
@@ -33,12 +33,12 @@ func main() {
 	// Run Sniffer/Collector
 	nbReceivers++
 	wg.Add(1)
-	go Collector(params, devices, dataChan, syncChan, &wg)
+	go Collector(params, devices, packetChan, syncChan, &wg)
 
 	// Run monitoring
 	nbReceivers += 2 // Todo : change that
 	wg.Add(1)
-	go Monitor(params, dataChan, reportChan, alertChan, syncChan, &wg)
+	go Monitor(params, packetChan, reportChan, alertChan, syncChan, &wg)
 
 	// Run display to print result
 	nbReceivers++

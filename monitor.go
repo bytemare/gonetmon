@@ -8,7 +8,7 @@ import (
 )
 
 // Monitor is a goroutine that listen on the dataChan channel to pull data packets for analysis
-func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- reportMsg, alertChan chan<- alertMsg, syncChan <-chan struct{}, wg *sync.WaitGroup) {
+func Monitor(parameters *Parameters, packetChan <-chan packetMsg, reportChan chan<- reportMsg, alertChan chan<- alertMsg, syncChan <-chan struct{}, wg *sync.WaitGroup) {
 
 	// Start a new monitoring session
 	session := session{
@@ -18,7 +18,7 @@ func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- 
 	}
 
 	// Set up ticker to regularly send reports to display
-	tickerReport := time.NewTicker(time.Second * time.Duration(parameters.DisplayRefresh))
+	tickerReport := time.NewTicker(time.Second * parameters.DisplayRefresh)
 
 monitorLoop:
 	for {
@@ -40,7 +40,7 @@ monitorLoop:
 			// Reset report
 			session.report = NewReport()
 
-		case data := <-dataChan:
+		case data := <-packetChan:
 			log.Info("[i] Monitor pulled data.")
 
 			// Handle http data type
@@ -51,7 +51,7 @@ monitorLoop:
 					log.WithFields(log.Fields{
 						"interface": data.device,
 						"capture timestamp": data.timestamp,
-						"payload": strings.ReplaceAll(data.payload, "\n", "{newline}"),
+						"payload": strings.ReplaceAll(string(data.rawPacket.ApplicationLayer().Payload()), "\n", "{newline}"), // Flatten to a single line to avoid breaking log file
 					}).Error("Could not interpret package as http.")
 					continue
 				}
