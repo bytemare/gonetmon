@@ -11,12 +11,11 @@ import (
 	"time"
 )
 
-
 // TODO : don't keep values here
 var (
 	snapshotLen int32 = 1024
-	promiscuous = false
-	timeout = defDisplayRefresh //10 * time.Second
+	promiscuous       = false
+	timeout           = defDisplayRefresh //10 * time.Second
 )
 
 // InitialiseCapture opens device interfaces and associated handles to listen on, returns a map of these.
@@ -71,7 +70,7 @@ func findDevices(interfaces []string) []net.Interface {
 	if interfaces != nil {
 		var tailoredList []net.Interface
 
-		interfacesLoop:
+	interfacesLoop:
 		for _, i := range interfaces {
 
 			for index, d := range devices {
@@ -112,7 +111,7 @@ func openDevice(device net.Interface) (*pcap.Handle, error) {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"interface": device.Name,
-			"error": err,
+			"error":     err,
 		}).Error("Could not open device.")
 
 		return nil, err
@@ -149,7 +148,6 @@ func closeDevices(handles []*pcap.Handle) {
 		closeDevice(h)
 	}
 }
-
 
 func closeMapDevices(devs map[string]*pcap.Handle) {
 	for d, h := range devs {
