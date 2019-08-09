@@ -9,9 +9,21 @@ os:
   - linux
   - osx
 
+addons:
+  sonarcloud:
+    organization: "bytemare-github"
+    token:
+      secure: ${SONAR_TOKEN}
+git:
+  depth: false # Sonar doesn't like shallow clones
+
+notifications:
+  email: false
+
 install:
-  - go get -d -v
+  - go get -d -v ./...
 
 script:
-  - go build -v
-  - sudo ./gonetmon
+  - go build -v ./...
+  - sonar-scanner
+  #- sudo ./gonetmon
