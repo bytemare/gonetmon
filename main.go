@@ -1,15 +1,14 @@
 package main
 
 import (
+	log "github.com/sirupsen/logrus"
 	"os"
 	"sync"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func main() {
 
-	//TODO : do proper prompt
+	//TODO : do proper prompt to ask for privileges
 	if os.Geteuid() != 0 {
 		log.Fatal("You must run this program with elevated privileges in order to capture traffic. Try running with sudo.")
 		return
@@ -19,7 +18,6 @@ func main() {
 	params := LoadParams()
 
 	// IPCs
-	//wg := sync.WaitGroup{}
 	var nbReceivers = 1
 	var wg sync.WaitGroup
 	dataChan := make(chan dataMsg, 1000)
@@ -33,7 +31,7 @@ func main() {
 	go Collector(params, dataChan, syncChan, &wg)
 
 	// Run monitoring
-	nbReceivers += 2
+	nbReceivers += 2 // Todo : change that
 	wg.Add(1)
 	go Monitor(params, dataChan, reportChan, alertChan, syncChan, &wg)
 
@@ -52,6 +50,5 @@ func main() {
 	<-syncChan
 	log.Info("Waiting for all processes to stop.")
 	wg.Wait()
-	// TODO : proper synchronisation, this here ends before collector may shutdown properly
-	log.Info("Capture stopped.")
+	log.Info("Monitoring successfully stopped.")
 }
