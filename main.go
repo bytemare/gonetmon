@@ -19,10 +19,8 @@ func main() {
 	// Check whether we can run
 	devices, err := InitialiseCapture(params.Interfaces)
 	if err != nil {
-		log.Fatal("Initialising capture failed. ", err)
+		log.Fatal("Initialising capture failed. Exiting")
 	}
-
-	log.Info("Found devices ", len(devices))
 
 	// IPCs
 	var nbReceivers = 1

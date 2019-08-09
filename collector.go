@@ -37,7 +37,6 @@ func InitialiseCapture(interfaces []string) (map[string]*pcap.Handle, error) {
 			// todo : error
 		} else {
 			m[d.Name] = h
-			log.Info("map len", len(m))
 		}
 	}
 
