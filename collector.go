@@ -156,11 +156,8 @@ func closeMapDevices(devs map[string]*pcap.Handle) {
 }
 
 // addFilter adds a BPF filter to the handle to filter sniffed traffic
-func addFilter(handle *pcap.Handle, filter string) {
-	err := handle.SetBPFFilter(filter)
-	if err != nil {
-		log.Fatal(err)
-	}
+func addFilter(handle *pcap.Handle, filter string) error {
+	return handle.SetBPFFilter(filter)
 }
 
 // sniffHTTP tells whether the packet contains HTTP
@@ -214,7 +211,13 @@ func Collector(parameters *Parameters, devices map[string]*pcap.Handle, dataChan
 
 	for dev, h := range devices {
 		wg.Add(1)
-		addFilter(h, parameters.Filter)
+		if err := addFilter(h, parameters.Filter); err != nil {
+			log.WithFields(log.Fields{
+				"interface": dev,
+				"error":     err,
+			}).Error("Could not set filter on device. Closing.")
+			closeDevice(h)
+		}
 		go capturePackets(h, &wg, dataChan, dev)
 	}
 
