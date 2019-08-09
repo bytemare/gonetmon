@@ -84,8 +84,8 @@ func (w *Watchdog) verify() {
 		if w.alert {
 			w.alert = false
 			w.alertChan <- buildAlertMsg(w, true, time.Now())
-			return
 		}
+		return
 	}
 
 	// Threshold reached
