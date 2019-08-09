@@ -1,8 +1,11 @@
 language: go
 
 go:
-  - 1.12.7
+  - 1.11.12
   - master
+
+env:
+  - GO111MODULE=on
 
 os:
   - linux
