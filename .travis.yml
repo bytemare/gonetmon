@@ -18,6 +18,7 @@ matrix:
 #      env:
 #        GIMME_OS=linux GIMME_ARCH=amd64
       os: linux
+      dist: trusty
     - name: "MacOS"
       env:
         GIMME_OS=darwin GIMME_ARCH=amd64
