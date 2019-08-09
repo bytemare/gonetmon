@@ -10,7 +10,7 @@ type dataMsg struct {
 }
 
 type reportMsg struct {
-	report    Report // Message body to display
+	report    *Report // Message body to display
 	timestamp time.Time
 }
 
@@ -23,8 +23,4 @@ type alertMsg struct {
 const (
 	// dataTypes
 	dataHTTP = "http"
-
-	// reportTypes
-	reportAnalysis = 1
-	reportAlarm    = 2
 )

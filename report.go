@@ -1,7 +1,6 @@
 package main
 
 import "time"
-import "github.com/jinzhu/copier"
 
 type sectionStats struct {
 	domain  string
@@ -30,8 +29,8 @@ type Report struct {
 	analysis analysis      // Final analysis of data
 }
 
-// addPacket adds a packet to the report
-func (r *Report) addPacket(p *HTTPPacket) {
+// AddPacket adds a packet to the report
+func (r *Report) AddPacket(p *HTTPPacket) {
 	r.packets = append(r.packets, p)
 }
 
@@ -42,12 +41,9 @@ func (r *Report) build() {
 func buildReportMsg(r *Report) reportMsg {
 	// TODO : build a report message from the report
 	msg := reportMsg{
-		report:    Report{},
+		report:   r,
 		timestamp: time.Now(),
 	}
-
-	// TODO : handle error
-	_ = copier.Copy(msg.report, r)
 
 	return msg
 }

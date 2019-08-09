@@ -10,9 +10,8 @@ import (
 func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- reportMsg, alertChan chan<- alertMsg, syncChan <-chan struct{}, wg *sync.WaitGroup) {
 
 	// Start a new monitoring session
-	report := NewReport()
 	session := session{
-		report:   report,
+		report:   NewReport(),
 		watchdog: NewWatchdog(parameters.AlertSpan, defaultTick, parameters.AlertThreshold, alertChan, defaultBufSize, syncChan, wg),
 		alert:    false,
 	}
@@ -32,13 +31,13 @@ monitorLoop:
 			log.Info("[i] Monitor : time for building and displaying a report :", tr)
 
 			// Build report
-			report.build()
+			session.report.build()
 
 			// Send report to display
-			reportChan <- buildReportMsg(report)
+			reportChan <- buildReportMsg(session.report)
 
 			// Reset report
-			//report := NewReport()
+			session.report = NewReport()
 
 		case data := <-dataChan:
 			log.Info("[i] Monitor pulled data.")
@@ -49,7 +48,7 @@ monitorLoop:
 				// Transform data into a more convenient form
 				// TODO : handle error
 				packet, _ := DataToHTTP(data)
-				report.addPacket(packet)
+				session.report.AddPacket(packet)
 
 				// Update Watchdog
 				session.watchdog.AddHit(data.timestamp)
