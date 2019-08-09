@@ -156,7 +156,7 @@ func NewWatchdog(window time.Duration, tick time.Duration, threshold uint, c cha
 
 	// Routine that continuously verifies the cache and will inform about alert status
 	go func() {
-		watchdogLoop:
+	watchdogLoop:
 		for {
 			select {
 

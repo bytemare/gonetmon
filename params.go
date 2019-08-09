@@ -14,8 +14,8 @@ type Parameters struct {
 	AlertThreshold uint          // Traffic (hits/span) threshold triggering an alert
 
 	// Display related parameters
-	DisplayRefresh time.Duration    // Time (seconds) the display will be updated
-	DisplayType    string // Type of display (for now it's CLI only)
+	DisplayRefresh time.Duration // Time (seconds) the display will be updated
+	DisplayType    string        // Type of display (for now it's CLI only)
 }
 
 // Default values for Parameter object
