@@ -70,7 +70,7 @@ func buildAlertMsg(w *Watchdog, recovery bool, t time.Time) alertMsg {
 	}
 }
 
-// addHit adds an element to the cache by sending a push request to the goroutine
+// AddHit adds an element to the cache by sending a push request to the goroutine
 func (w *Watchdog) AddHit(t time.Time) {
 	w.cache.push <- t
 }
