@@ -52,7 +52,7 @@ func buildReportMsg(r *Report) reportMsg {
 	return msg
 }
 
-// Returns a new and empty Report struct
+// NewReport returns a new and empty Report struct
 func NewReport() *Report {
 	return &Report{
 		packets:  nil,
