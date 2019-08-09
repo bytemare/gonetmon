@@ -99,8 +99,6 @@ func findDevices(interfaces []string) []net.Interface {
 		devices = tailoredList
 	}
 
-	log.Info("Found devices ", len(devices))
-
 	return devices
 }
 
@@ -160,29 +158,23 @@ func addFilter(handle *pcap.Handle, filter string) error {
 	return handle.SetBPFFilter(filter)
 }
 
-// sniffHTTP tells whether the packet contains HTTP
-func sniffHTTP(packet gopacket.Packet) bool {
-	var ishttp = false
+// sniffApplicationLayer tells whether the packet contains the filter string
+func sniffApplicationLayer(packet gopacket.Packet, filter string) bool {
+	var isApp = false
 	applicationLayer := packet.ApplicationLayer()
 	if applicationLayer != nil {
 		payload := applicationLayer.Payload()
-		if strings.Contains(string(payload), "HTTP") {
-			/*
-				fmt.Print("HTTP found!\n")
-				fmt.Printf("\t     Payload : '%s'\n", payload)
-				fmt.Printf("\t     Packet Data : '%s'\n", string(packet.Data()))
-				fmt.Printf("%s%s\n", strings.Repeat("=", 20), strings.Repeat("\n", 4))
-			*/
-			ishttp = true
+		if strings.Contains(string(payload), filter) {
+			isApp = true
 		}
 	}
 
-	return ishttp
+	return isApp
 }
 
 // capturePacket continuously listens to a device interface managed by handle, and extracts relevant packets from traffic
 // to send it to dataChan
-func capturePackets(handle *pcap.Handle, wg *sync.WaitGroup, dataChan chan<- dataMsg, name string) {
+func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, dataChan chan<- dataMsg, name string) {
 	defer wg.Done()
 
 	log.Info("Capturing packets on ", name)
@@ -191,9 +183,9 @@ func capturePackets(handle *pcap.Handle, wg *sync.WaitGroup, dataChan chan<- dat
 
 	// This will loop on a channel that will send packages, and will quit when the handle is closed by another caller
 	for packet := range packetSource.Packets() {
-		if sniffHTTP(packet) {
+		if sniffApplicationLayer(packet, filter.Application) {
 			dataChan <- dataMsg{
-				dataType:  dataHTTP,
+				dataType:  filter.Type,
 				timestamp: time.Now(),
 				device:    name,
 				payload:   string(packet.ApplicationLayer().Payload()),
@@ -211,14 +203,14 @@ func Collector(parameters *Parameters, devices map[string]*pcap.Handle, dataChan
 
 	for dev, h := range devices {
 		wg.Add(1)
-		if err := addFilter(h, parameters.Filter); err != nil {
+		if err := addFilter(h, parameters.PacketFilter.Network); err != nil {
 			log.WithFields(log.Fields{
 				"interface": dev,
 				"error":     err,
 			}).Error("Could not set filter on device. Closing.")
 			closeDevice(h)
 		}
-		go capturePackets(h, &wg, dataChan, dev)
+		go capturePackets(h, &parameters.PacketFilter, &wg, dataChan, dev)
 	}
 
 	// Wait until sync to stop

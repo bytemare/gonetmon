@@ -3,12 +3,23 @@ package main
 
 import "time"
 
+const (
+	// dataTypes
+	dataHTTP = "http"
+)
+
+type Filter struct {
+	Network     string // BPF filter to filter traffic sniffing
+	Application string // Filter to apply at application level : string to search for
+	Type        string // Type of expected data
+}
+
 // Parameters holds the application's parameters it runs on
 type Parameters struct {
 
 	// Raw data parameters
-	Filter     string   // BPF filter to filter traffic sniffing
-	Interfaces []string // Array of interfaces to specifically listen on. If nil, listen on all devices.
+	PacketFilter	Filter
+	Interfaces		[]string // Array of interfaces to specifically listen on. If nil, listen on all devices.
 
 	// Analysis related parameters
 	AlertSpan      time.Duration // Time (seconds) span to monitor for alert trigger
@@ -21,12 +32,13 @@ type Parameters struct {
 
 // Default values for Parameter object
 const (
-	defFilter = "tcp and port 80"
-	//defInterfaces     = []string{}
-	defAlertSpan      = 10 * time.Second
-	defAlertThreshold = 4
-	defDisplayRefresh = 2 * time.Second
-	defDisplayType    = "console"
+	defNetworkFilter     = "tcp and port 80"
+	defApplicationFilter = "HTTP"
+	defApplicationType	 = dataHTTP
+	defAlertSpan         = 10 * time.Second
+	defAlertThreshold    = 4
+	defDisplayRefresh    = 2 * time.Second
+	defDisplayType       = "console"
 
 	defRecoveryFormat = "Alert recovered at %s"
 	defAlertFormat    = "High traffic generated an alert - hits = %d, triggered at %s"
@@ -37,11 +49,15 @@ func LoadParams() *Parameters {
 	// Todo : There should be a better way of doing this + argument validation
 
 	return &Parameters{
-		Interfaces:     nil,
-		Filter:         defFilter,
-		AlertSpan:      defAlertSpan,
-		AlertThreshold: defAlertThreshold,
-		DisplayRefresh: defDisplayRefresh,
-		DisplayType:    defDisplayType,
+		PacketFilter:Filter{
+			Network:     defNetworkFilter,
+			Application: defApplicationFilter,
+			Type:        defApplicationType,
+		},
+		Interfaces:        nil,
+		AlertSpan:         defAlertSpan,
+		AlertThreshold:    defAlertThreshold,
+		DisplayRefresh:    defDisplayRefresh,
+		DisplayType:       defDisplayType,
 	}
 }

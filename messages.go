@@ -19,8 +19,3 @@ type alertMsg struct {
 	body      string // Message to display
 	timestamp time.Time
 }
-
-const (
-	// dataTypes
-	dataHTTP = "http"
-)
