@@ -85,7 +85,7 @@ func DataToHTTP(data dataMsg) (*httpPacket, error) {
 		response:    nil,
 	}
 
-	// If it is a Response, it starts with 'HTTP'
+	// If it is a Response, it starts with 'HTTP/'
 	if strings.HasPrefix(data.payload, "HTTP/") {
 
 		response, err := readResponse(bufReader)
@@ -100,18 +100,17 @@ func DataToHTTP(data dataMsg) (*httpPacket, error) {
 
 		return nil, err
 
-	} else {
-		// If not, it may be a Request
-		request, err := readRequest(bufReader)
-
-		if request != nil {
-			//fmt.Printf("We have a request ! => '%s'\n\n", request)
-			packet.messageType = httpRequest
-			packet.request = request
-
-			return packet, nil
-		}
-
-		return nil, err
 	}
+
+	// If not, it may be a Request
+	request, err := readRequest(bufReader)
+
+	if request != nil {
+		//fmt.Printf("We have a request ! => '%s'\n\n", request)
+		packet.messageType = httpRequest
+		packet.request = request
+		return packet, nil
+	}
+
+	return nil, err
 }
