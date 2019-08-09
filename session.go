@@ -11,7 +11,7 @@ import (
 
 type session struct {
 	report   *Report   // Current report
-	watchdog *Watchdog // Surveil traffic behaviour and raise alert is need
+	watchdog *Watchdog // Surveil traffic behaviour and raise alert if need
 	alert    bool      // Current alert status
 }
 
@@ -38,13 +38,11 @@ const (
 func readRequest(b *bufio.Reader) (*http.Request, error) {
 	req, err := http.ReadRequest(b)
 	if err == io.EOF {
-		// TODO : this should not happen, handle anyway
-		log.Error("Request reading : EOF\n")
+		log.Error("HTTP Request reading hit EOF : ", err)
 		return nil, err
 	}
 	if err != nil {
-		// TODO :handle error
-		log.Error("We have an error in request : %s\n", err)
+		log.Error("HTTP Request reading error : ", err)
 		return nil, err
 	}
 
@@ -56,14 +54,12 @@ func readResponse(b *bufio.Reader) (*http.Response, error) {
 	resp, err := http.ReadResponse(b, nil)
 
 	if err == io.EOF {
-		// TODO : this should not happen, handle anyway
-		log.Error("We have an error in an HTTP response packet : %s\n", err)
+		log.Error("HTTP Response reading hit EOF : ", err)
 		return nil, err
 	}
 
 	if err != nil {
-		// TODO :handle error
-		log.Error("We have an error in an HTTP response packet : %s\n", err)
+		log.Error("HTTP Response reading error : ", err)
 		return nil, err
 	}
 
@@ -72,7 +68,6 @@ func readResponse(b *bufio.Reader) (*http.Response, error) {
 
 // DataToHTTP transforms the raw payload into a HTTPPacket struct.
 // Returns nil wth an error if data does not contain a valid http payload
-// TODO : implement fail and error if data is not valid http payload
 func DataToHTTP(data dataMsg) (*HTTPPacket, error) {
 
 	// In order to use the /net/http functions to interpret http packets,
@@ -92,27 +87,23 @@ func DataToHTTP(data dataMsg) (*HTTPPacket, error) {
 
 		response, err := readResponse(bufReader)
 
-		if response != nil {
-			//fmt.Printf("We have a response ! => '%s'\n\n", response)
-			packet.messageType = httpResponse
-			packet.response = response
-
-			return packet, nil
+		if err != nil {
+			return nil, err
 		}
 
-		return nil, err
-
+		packet.messageType = httpResponse
+		packet.response = response
+		return packet, nil
 	}
 
 	// If not, it may be a Request
 	request, err := readRequest(bufReader)
 
-	if request != nil {
-		//fmt.Printf("We have a request ! => '%s'\n\n", request)
-		packet.messageType = httpRequest
-		packet.request = request
-		return packet, nil
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, err
+	packet.messageType = httpRequest
+	packet.request = request
+	return packet, nil
 }
