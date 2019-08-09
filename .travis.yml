@@ -15,8 +15,8 @@ notifications:
 matrix:
   include:
     - name: "Linux"
-      env:
-        GIMME_OS=linux GIMME_ARCH=amd64
+#      env:
+#        GIMME_OS=linux GIMME_ARCH=amd64
       os: linux
     - name: "MacOS"
       env:
