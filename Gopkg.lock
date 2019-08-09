@@ -8,12 +8,6 @@
   version = "v1.1.17"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/jinzhu/copier"
-  packages = ["."]
-  revision = "976e0346caa839d22a17f8031a96bcd0870c0128"
-
-[[projects]]
   name = "github.com/konsorten/go-windows-terminal-sequences"
   packages = ["."]
   revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
@@ -34,6 +28,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c9a09f8c4335ae3c44b4b87b48b58143ecee590324c60d761473a520cb00cd4b"
+  inputs-digest = "1d6af13b568c355afbeac9b4ba7b94bf1dd421b74d66e20f8b4a4b97cf2d52ba"
   solver-name = "gps-cdcl"
   solver-version = 1
