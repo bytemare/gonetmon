@@ -12,7 +12,7 @@ import (
 
 var (
 	snapshotLen int32         = 1024
-	promiscuous bool          = false
+	promiscuous  = false
 	timeout     time.Duration = defDisplayRefresh //10 * time.Second
 )
 
