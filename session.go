@@ -15,7 +15,9 @@ type session struct {
 	alert    bool      // Current alert status
 }
 
-type httpPacket struct {
+// HTTPPacket is a wrapper around a /net/http Request or Response struct, with additional information on which interface
+// the packet was captured
+type HTTPPacket struct {
 	messageType string // Either request or response
 	device      string // Interface on which the packet was recorded
 
@@ -68,17 +70,17 @@ func readResponse(b *bufio.Reader) (*http.Response, error) {
 	return resp, nil
 }
 
-// DataToHTTP transforms the raw payload into a httpPacket struct.
+// DataToHTTP transforms the raw payload into a HTTPPacket struct.
 // Returns nil wth an error if data does not contain a valid http payload
 // TODO : implement fail and error if data is not valid http payload
-func DataToHTTP(data dataMsg) (*httpPacket, error) {
+func DataToHTTP(data dataMsg) (*HTTPPacket, error) {
 
 	// In order to use the /net/http functions to interpret http packets,
 	// we have to present *bufio.Reader containing the payload
 	b := []byte(data.payload)
 	bufReader := bufio.NewReader(bytes.NewReader(b))
 
-	packet := &httpPacket{
+	packet := &HTTPPacket{
 		messageType: "",
 		device:      data.device,
 		request:     nil,
