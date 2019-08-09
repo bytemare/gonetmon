@@ -2,11 +2,12 @@ package main
 
 import (
 	log "github.com/sirupsen/logrus"
+	"strings"
 	"sync"
 	"time"
 )
 
-// Monitor is a goroutine that listen on the dataChan channel to pull datapackets for analysis
+// Monitor is a goroutine that listen on the dataChan channel to pull data packets for analysis
 func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- reportMsg, alertChan chan<- alertMsg, syncChan <-chan struct{}, wg *sync.WaitGroup) {
 
 	// Start a new monitoring session
@@ -44,10 +45,16 @@ monitorLoop:
 
 			// Handle http data type
 			if data.dataType == dataHTTP {
-
 				// Transform data into a more convenient form
-				// TODO : handle error
-				packet, _ := DataToHTTP(data)
+				packet, err := DataToHTTP(data)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"interface": data.device,
+						"capture timestamp": data.timestamp,
+						"payload": strings.ReplaceAll(data.payload, "\n", "{newline}"),
+					}).Error("Could not interpret package as http.")
+					continue
+				}
 				session.report.AddPacket(packet)
 
 				// Update Watchdog
