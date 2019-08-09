@@ -1,8 +1,14 @@
 language: go
 
 go:
-  - 1.11
+  - 1.11.12
   - master
+
+os:
+  - linux
+  - osx
+dist: trusty
+
 
 
 addons:
@@ -17,15 +23,15 @@ notifications:
   email: false
 
 
-matrix:
-  include:
-    - name: "Linux"
-      os: linux
-      dist: trusty
-      after_script:
-        - sonar-scanner
-    - name: "MacOS"
-      os: osx
+#matrix:
+#  include:
+#    - name: "Linux"
+#      os: linux
+#      dist: trusty
+#      after_script:
+#        - sonar-scanner
+#    - name: "MacOS"
+#      os: osx
 
     #- name: "Windows"
     #  os: windows
@@ -39,4 +45,5 @@ script:
   - go build -v ./...
 
 after_success:
+  - sonar-scanner
   - sudo ./gonetmon
