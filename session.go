@@ -68,8 +68,8 @@ func readResponse(b *bufio.Reader) (*http.Response, error) {
 	return resp, nil
 }
 
-// Transforms the raw payload into a httpPacket struct.
-// returns nil wth an error if data does not contain a valid http payload
+// DataToHTTP transforms the raw payload into a httpPacket struct.
+// Returns nil wth an error if data does not contain a valid http payload
 // TODO : implement fail and error if data is not valid http payload
 func DataToHTTP(data dataMsg) (*httpPacket, error) {
 
