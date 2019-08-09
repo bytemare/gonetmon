@@ -26,12 +26,12 @@ type analysis struct {
 
 // Report holds the packets and the result of a recording window
 type Report struct {
-	packets  []*httpPacket // A set of packets to be analysed
+	packets  []*HTTPPacket // A set of packets to be analysed
 	analysis analysis      // Final analysis of data
 }
 
 // addPacket adds a packet to the report
-func (r *Report) addPacket(p *httpPacket) {
+func (r *Report) addPacket(p *HTTPPacket) {
 	r.packets = append(r.packets, p)
 }
 
