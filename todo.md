@@ -14,8 +14,7 @@
 
 ### Remain
 
-- Proper synchronisation for graceful shutdown
-- Clean display and colors
+- display hits
 
 ### Error handling
 
