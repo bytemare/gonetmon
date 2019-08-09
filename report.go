@@ -41,7 +41,7 @@ func (r *Report) build() {
 func buildReportMsg(r *Report) reportMsg {
 	// TODO : build a report message from the report
 	msg := reportMsg{
-		report:   r,
+		report:    r,
 		timestamp: time.Now(),
 	}
 
