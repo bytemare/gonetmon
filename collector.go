@@ -1,10 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"strings"
 	"sync"
@@ -14,7 +13,7 @@ import (
 var (
 	snapshotLen int32         = 1024
 	promiscuous bool          = false
-	timeout     time.Duration = 10 * time.Second
+	timeout     time.Duration = defDisplayRefresh //10 * time.Second
 )
 
 // findDevices gathers the list of interfaces of the machine
@@ -30,7 +29,7 @@ func findDevices() []net.Interface {
 // Print the list of devices
 func printDevices(devices []net.Interface) {
 	for _, f := range devices {
-		fmt.Println(f.Name)
+		log.Info(f.Name)
 	}
 }
 
@@ -40,7 +39,6 @@ func openDevice(device net.Interface) *pcap.Handle {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//defer handle.Close()
 	return handle
 }
 
@@ -60,6 +58,7 @@ func openDevices(devs []net.Interface) []*pcap.Handle {
 
 // Closes listening on given interfaces through their handle
 func closeDevices(handles []*pcap.Handle) {
+	log.Info("Closing devices.")
 	for _, h := range handles {
 		closeDevice(h)
 	}
@@ -112,36 +111,36 @@ func capturePackets(handle *pcap.Handle, wg *sync.WaitGroup, dataChan chan<- dat
 		}
 	}
 
-	fmt.Printf("Stop listening on %s\n", name)
+	log.Info("Closing capture on ", name)
 }
 
 // Collector listens on all network devices for relevant traffic and sends packets to dataChan
-func Collector(parameters *Parameters, dataChan chan dataMsg, syncChan <-chan struct{}) {
+func Collector(parameters *Parameters, dataChan chan dataMsg, syncChan <-chan struct{}, syncwg *sync.WaitGroup) {
 
 	devices := findDevices()
 
-	printDevices(devices)
+	//printDevices(devices)
 
 	handles := openDevices(devices)
 
 	wg := sync.WaitGroup{}
 
 	for i, h := range handles {
-		fmt.Println("Capturing packets on", devices[i].Name)
+		log.Info("Capturing packets on ", devices[i].Name)
 		wg.Add(1)
 		addFilter(h, parameters.Filter)
 		go capturePackets(h, &wg, dataChan, devices[i].Name)
 	}
 
 	// Wait until sync to stop
-	fmt.Println("\nCollector waiting for signal...")
 	<-syncChan
 
 	// Inform goroutines to stop
 	closeDevices(handles)
 
 	// Wait for goroutines to stop
-	fmt.Println("Collector waiting for subs...")
+	log.Info("Collector waiting for subs...")
 	wg.Wait()
-	fmt.Println("Collector terminating")
+	log.Info("Collector terminating")
+	syncwg.Done()
 }

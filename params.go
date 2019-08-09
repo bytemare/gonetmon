@@ -14,16 +14,16 @@ type Parameters struct {
 	AlertThreshold uint          // Traffic (hits/span) threshold triggering an alert
 
 	// Display related parameters
-	DisplayRefresh int    // Time (seconds) the display will be updated
+	DisplayRefresh time.Duration    // Time (seconds) the display will be updated
 	DisplayType    string // Type of display (for now it's CLI only)
 }
 
 // Default values for Parameter object
 const (
 	defFilter         = "tcp and port 80"
-	defAlertSpan      = 120 * time.Second
-	defAlertThreshold = 500
-	defDisplayRefresh = 10
+	defAlertSpan      = 10 * time.Second
+	defAlertThreshold = 4
+	defDisplayRefresh = 2 * time.Second
 	defDisplayType    = "console"
 
 	defRecoveryFormat = "Alert recovered at %s"

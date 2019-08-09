@@ -1,29 +1,39 @@
 package main
 
-import "fmt"
+import (
+	log "github.com/sirupsen/logrus"
+	"sync"
+)
 
 func outputReport(r *reportMsg, output string) {
 	// TODO
-	fmt.Printf("[i] Display received a report to '%s' : '%s' !\n", output, r)
+	log.Info("[i] Display received a report to '%s' : '%s' !\n", output, r)
 }
 
 // Display loops on receiving channels to print alerts and reports
-func Display(parameters *Parameters, reportChan <-chan reportMsg, alertChan <-chan alertMsg, syncChan <-chan struct{}) {
+func Display(parameters *Parameters, reportChan <-chan reportMsg, alertChan <-chan alertMsg, syncChan <-chan struct{}, wg *sync.WaitGroup) {
 
 displayLoop:
 	for {
 		select {
 
 		case <-syncChan:
-			fmt.Println("[i] Display received sync message")
 			break displayLoop
 
 		case alert := <-alertChan:
-			fmt.Printf("[ALERT] %s\n", alert.body)
+
+			if alert.recovery {
+				log.Info(alert.body)
+			} else {
+				log.Warn(alert.body)
+			}
 
 		case report := <-reportChan:
 			// Interpret report and adapt to desired output
 			outputReport(&report, parameters.DisplayType)
 		}
 	}
+
+	log.Info("Display terminating.")
+	wg.Done()
 }

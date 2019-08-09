@@ -3,6 +3,7 @@ package main
 import (
 	"container/list"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
@@ -87,10 +88,13 @@ func (w *Watchdog) verify() {
 		}
 	}
 
-	// New Alert
-	if w.cache.size >= w.threshold && !w.alert {
-		w.alert = true
-		w.alertChan <- buildAlertMsg(w, false, time.Now())
+	// Threshold reached
+	if w.cache.size >= w.threshold {
+		// New Alert
+		if !w.alert {
+			w.alert = true
+			w.alertChan <- buildAlertMsg(w, false, time.Now())
+		}
 	} else {
 		// Recovery
 		if w.alert {
@@ -104,8 +108,6 @@ func (w *Watchdog) verify() {
 
 // Evict pops all values from the cache that have passed the authorised window
 func (w *Watchdog) evict(now time.Time) {
-	defer w.verify()
-
 	for {
 
 		if w.cache.list.Len() <= 0 {
@@ -154,25 +156,28 @@ func NewWatchdog(window time.Duration, tick time.Duration, threshold uint, c cha
 
 	// Routine that continuously verifies the cache and will inform about alert status
 	go func() {
+		watchdogLoop:
 		for {
 			select {
 
 			// Synchronisation/Exit trigger
 			case <-stop:
-				wg.Done()
+				log.Info("Watchdog terminating.")
+				break watchdogLoop
 
 			// Continuously evict old elements
 			case t := <-ticker.C:
 				dog.evict(t)
+				dog.verify()
 
 			// Push request
 			case p := <-dog.cache.push:
 				dog.cache.list.PushBack(p)
 				dog.cache.size++
-
 				dog.verify()
 			}
 		}
+		wg.Done()
 	}()
 
 	return &dog

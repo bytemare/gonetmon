@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
@@ -20,16 +20,16 @@ func Monitor(parameters *Parameters, dataChan <-chan dataMsg, reportChan chan<- 
 	// Set up ticker to regularly send reports to display
 	tickerReport := time.NewTicker(time.Second * time.Duration(parameters.DisplayRefresh))
 
-monitorloop:
+monitorLoop:
 	for {
 		select {
 
 		case <-syncChan:
-			fmt.Println("[i] Monitor received sync message")
-			break monitorloop
+			log.Info("[i] Monitor received sync message")
+			break monitorLoop
 
 		case tr := <-tickerReport.C:
-			fmt.Println("[i] Monitor : time for building and displaying a report :", tr)
+			log.Info("[i] Monitor : time for building and displaying a report :", tr)
 
 			// Build report
 			report.build()
@@ -41,20 +41,22 @@ monitorloop:
 			//report := NewReport()
 
 		case data := <-dataChan:
-			fmt.Println("[i] Monitor pulled data.")
+			log.Info("[i] Monitor pulled data.")
 
 			// Handle http data type
 			if data.dataType == dataHTTP {
 
 				// Transform data into a more convenient form
 				// TODO : handle error
-				packet, _ := dataToHTTP(data)
+				packet, _ := DataToHTTP(data)
 				report.addPacket(packet)
 
 				// Update Watchdog
-				session.watchdog.addHit(data.timestamp)
+				session.watchdog.AddHit(data.timestamp)
 			}
 		}
 
 	}
+
+	wg.Done()
 }

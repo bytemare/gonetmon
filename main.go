@@ -1,12 +1,19 @@
 package main
 
 import (
-	"fmt"
+	"os"
+	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
 
-	//TODO : verify if we are running with sudo in order to be able to work
+	//TODO : do proper prompt
+	if os.Geteuid() != 0 {
+		log.Fatal("You must run this program with elevated privileges in order to capture traffic. Try running with sudo.")
+		return
+	}
 
 	// Load parameters
 	params := LoadParams()
@@ -14,32 +21,37 @@ func main() {
 	// IPCs
 	//wg := sync.WaitGroup{}
 	var nbReceivers = 1
+	var wg sync.WaitGroup
 	dataChan := make(chan dataMsg, 1000)
 	reportChan := make(chan reportMsg, 1)
 	alertChan := make(chan alertMsg, 1)
 	syncChan := make(chan struct{})
 
 	// Run Sniffer/Collector
-	//wg.Add(1)
 	nbReceivers++
-	go Collector(params, dataChan, syncChan)
-
-	fmt.Println("\n Collector launched.")
+	wg.Add(1)
+	go Collector(params, dataChan, syncChan, &wg)
 
 	// Run monitoring
-	go Monitor(params, dataChan, reportChan, alertChan, syncChan)
+	nbReceivers += 2
+	wg.Add(1)
+	go Monitor(params, dataChan, reportChan, alertChan, syncChan, &wg)
 
 	// Run display to print result
-	go Display(params, reportChan, alertChan, syncChan)
+	nbReceivers++
+	wg.Add(1)
+	go Display(params, reportChan, alertChan, syncChan, &wg)
 
 	// Run command
-	//wg.Add(1)
-	go command(syncChan, nbReceivers)
+	wg.Add(1)
+	go command(syncChan, nbReceivers, &wg)
 
-	fmt.Println("\n Sniffing ready.")
+	log.Info("Capturing set up.")
 
 	// Shutdown
 	<-syncChan
+	log.Info("Waiting for all processes to stop.")
+	wg.Wait()
 	// TODO : proper synchronisation, this here ends before collector may shutdown properly
-	fmt.Println("\n Sniffing stopped.")
+	log.Info("Capture stopped.")
 }

@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"strings"
@@ -37,12 +37,12 @@ func readRequest(b *bufio.Reader) (*http.Request, error) {
 	req, err := http.ReadRequest(b)
 	if err == io.EOF {
 		// TODO : this should not happen, handle anyway
-		fmt.Printf("Request reading : EOF\n")
+		log.Error("Request reading : EOF\n")
 		return nil, err
 	}
 	if err != nil {
 		// TODO :handle error
-		fmt.Printf("We have an error in request : %s\n", err)
+		log.Error("We have an error in request : %s\n", err)
 		return nil, err
 	}
 
@@ -55,13 +55,13 @@ func readResponse(b *bufio.Reader) (*http.Response, error) {
 
 	if err == io.EOF {
 		// TODO : this should not happen, handle anyway
-		fmt.Printf("We have an error in an HTTP response packet : %s\n", err)
+		log.Error("We have an error in an HTTP response packet : %s\n", err)
 		return nil, err
 	}
 
 	if err != nil {
 		// TODO :handle error
-		fmt.Printf("We have an error in an HTTP response packet : %s\n", err)
+		log.Error("We have an error in an HTTP response packet : %s\n", err)
 		return nil, err
 	}
 

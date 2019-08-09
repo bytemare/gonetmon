@@ -5,25 +5,27 @@
 package main
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 )
 
 // command handles CLI interactions
-func command(syncChan chan<- struct{}, nbReceivers int) {
+func command(syncChan chan<- struct{}, nbReceivers int, wg *sync.WaitGroup) {
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	for sig := range sigs {
-		fmt.Println("command received signal :", sig.String())
+		log.Info("command received signal :", sig.String())
 		for n := 0; n < nbReceivers; n++ {
 			syncChan <- struct{}{}
 		}
 		break
 	}
 
-	fmt.Print("command terminating\n")
+	log.Info("command terminating.")
+	wg.Done()
 }
