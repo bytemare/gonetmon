@@ -184,6 +184,12 @@ func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, pac
 	// This will loop on a channel that will send packages, and will quit when the handle is closed by another caller
 	for packet := range packetSource.Packets() {
 		if sniffApplicationLayer(packet, filter.Application) {
+
+			log.Debug("#### Found http packet : \n", packet.String())
+
+			netw := packet.NetworkLayer()
+			log.Debug("#### Network layer : \n", netw.LayerContents())
+
 			packetChan <- packetMsg{
 				dataType:  filter.Type,
 				timestamp: time.Now(),
