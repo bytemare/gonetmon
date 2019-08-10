@@ -51,7 +51,7 @@ monitorLoop:
 					log.WithFields(log.Fields{
 						"interface": data.device,
 						"capture timestamp": data.timestamp,
-						"payload": strings.ReplaceAll(string(data.rawPacket.ApplicationLayer().Payload()), "\n", "{newline}"), // Flatten to a single line to avoid breaking log file
+						"payload": strings.Replace(string(data.rawPacket.ApplicationLayer().Payload()), "\n", "{newline}", -1), // Flatten to a single line to avoid breaking log file
 					}).Error("Could not interpret package as http.")
 					continue
 				}
