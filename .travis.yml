@@ -40,6 +40,8 @@ notifications:
 
     #- name: "Windows"
     #  os: windows
+    #  before_install:
+    #    - choco install winpcap
     #  script:
     #    - ./gonetmon
 
