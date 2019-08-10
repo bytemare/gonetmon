@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/google/gopacket"
 	"net/http"
 	"time"
@@ -41,24 +42,21 @@ type responseStats struct {
 }
 
 type sectionStats struct {
-	domain  string
 	section string
 	nbHits  int
+}
 
+type hostStats struct {
+	host      string
+	sections  map[string]*sectionStats
 	// Statistics about requests and responses
 	requests	requestStats
 	responses	responseStats
 }
 
-type domainStats struct {
-	domain    string
-	nbResults int
-	sections	map[string]*sectionStats
-}
-
 type analysis struct {
-	nbDomains int
-	domains   map[string]*domainStats
+	nbHosts int
+	hosts   map[string]*hostStats
 }
 
 // Report holds the packets and the result of a recording window
@@ -67,8 +65,12 @@ type Report struct {
 	analysis analysis      // Final analysis of data
 }
 
+/*
 // Update statistics of a section with new data
-func updateSectionStat(section *sectionStats, p *MetaPacket) {
+func (r *Report) updateStats(hostname string, sectionName string, p *MetaPacket) {
+
+	host := r.analysis.hosts[hostname]
+	section := host.sections[sectionName]
 
 	// Update Hits
 	section.nbHits++
@@ -76,8 +78,8 @@ func updateSectionStat(section *sectionStats, p *MetaPacket) {
 	// Update Request/Response counters
 	if p.messageType == httpRequest {
 
-		section.requests.nbReqs++
-
+		host.requests.nbReqs++
+		section.nbHits++
 		method := p.request.Method
 
 		// If method was not yet registered, do it
@@ -97,59 +99,70 @@ func updateSectionStat(section *sectionStats, p *MetaPacket) {
 		}
 		section.responses.nbStatus[status]++
 	}
-}
+}*/
 
 // NewSectionStats returns an empty set of statistics about a section
-func NewSectionStats(domain string, section string) *sectionStats {
+func NewSectionStats(section string) *sectionStats {
 	return &sectionStats{
-		domain:  domain,
 		section: section,
 		nbHits:  0,
-		requests:requestStats{
-			nbReqs:    0,
-			nbMethods: make(map[string]uint),
-		},
-		responses:responseStats{
-			nbResp:   0,
-			nbStatus: make(map[int]uint),
-		},
 	}
 }
 
-func NewDomainStats(domain string) *domainStats {
-	return &domainStats{
-		domain:    domain,
-		nbResults: 0,
+func NewHostStats(host string) *hostStats {
+	return &hostStats{
+		host:      host,
 		sections:  nil,
 	}
 }
 
+
+func getHost(p *MetaPacket) (string, error) {
+
+	if p.messageType == httpRequest {
+		return p.request.Host, nil
+	}
+
+	return "fAiL.c0m", errors.New("could not extract hostname from packet")
+}
+
+func getSection(p *MetaPacket) (string, error) {
+	if p.messageType == httpRequest {
+		return p.request.RequestURI, nil
+	}
+
+	return "dummy section", errors.New("could not extract section from packet")
+}
+
+
 // updateAnalysis update's the report's current analysis with the new incoming packet information
 func (r *Report) updateAnalysis(p *MetaPacket){
-	domain := getDomain(p)
-	section := getSection(p)
-	domains := r.analysis.domains
+	host, _ := getHost(p)
+	section, _ := getSection(p)
+	hosts := r.analysis.hosts
 
-	// If if domain not registered, create new
-	if _, ok := r.analysis.domains[domain]; ok == false {
-		// Register new domain and section
-		domains[domain] = NewDomainStats(domain)
-		domains[domain].sections[section] = NewSectionStats(domain, section)
+	// If if host not registered, create new
+	if _, ok := r.analysis.hosts[host]; ok == false {
+		// Register new host and section
+		hosts[host] = NewHostStats(host)
+		hosts[host].sections[section] = NewSectionStats(section)
 	} else {
 		// If the section is not registered, create new
-		if _, ok := domains[domain].sections[section]; ok == false {
+		if _, ok := hosts[host].sections[section]; ok == false {
 			// Register new section
-			domains[domain].sections[section] = NewSectionStats(domain, section)
+			hosts[host].sections[section] = NewSectionStats(section)
 		}
 	}
 
 	// Update statistics on section
-	updateSectionStat(domains[domain].sections[section], p)
+	//updateStats(host, section, p)
 }
 
 // AddPacket adds a packet to the report
 func (r *Report) AddPacket(p *MetaPacket) {
 	r.packets = append(r.packets, p)
+
+
 	r.updateAnalysis(p)
 }
 
