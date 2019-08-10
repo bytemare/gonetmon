@@ -14,7 +14,9 @@
 
 ### Remain
 
-- display hits
+- Hit Analysis
+- Report building
+- Hit display
 
 ### Error handling
 
@@ -33,9 +35,9 @@
   - Ad-hoc tests
     - [ ] Tailor specific requests to trigger hit detection and alerts
 
-- [ ] Code quality
+- [x] Code quality
   - [x] goreportcard
   - [x] Codacy
-  - [ ] Sonar
-- [ ] Vulnerability checks
-  - [ ] Snyk
+  - [x] Sonar
+- [x] Vulnerability checks
+  - [x] Snyk
