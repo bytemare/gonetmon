@@ -30,17 +30,24 @@ type MetaPacket struct {
 	packet		*gopacket.Packet
 }
 
+type requestStats struct {
+	nbReqs		uint				// Sum of all the elements
+	nbMethods	map[string]uint	// Map request methods to the number of times they were encountered
+}
+
+type responseStats struct {
+	nbResp		uint			// Sum of all registered elements
+	nbStatus	map[int]uint	// Map status codes to the number of times they were encountered
+}
+
 type sectionStats struct {
 	domain  string
 	section string
 	nbHits  int
-	nbReqs  int
-	nbResp  int
-	nb1x  	int
-	nb2x	int
-	nb3x	int
-	nb4x	int
-	nb5x	int
+
+	// Statistics about requests and responses
+	requests	requestStats
+	responses	responseStats
 }
 
 type domainStats struct {
@@ -68,32 +75,27 @@ func updateSectionStat(section *sectionStats, p *MetaPacket) {
 
 	// Update Request/Response counters
 	if p.messageType == httpRequest {
-		section.nbReqs++
-	} else {
-		section.nbResp++
-		status := getStatusCode(p.response)
 
-		// Update status code hits
-		// Little hacky to avoid snaky if/else
-		for {
-			if status < 200 {
-				section.nb1x++
-				break
-			}
-			if status < 300 {
-				section.nb2x++
-				break
-			}
-			if status < 400 {
-				section.nb3x++
-				break
-			}
-			if status < 500 {
-				section.nb4x++
-				break
-			}
-			section.nb5x++
+		section.requests.nbReqs++
+
+		method := p.request.Method
+
+		// If method was not yet registered, do it
+		if _, ok := section.requests.nbMethods[method]; ok == false {
+			section.requests.nbMethods[method] = 0
 		}
+		section.requests.nbMethods[method]++
+
+	} else { // Response
+
+		section.responses.nbResp++
+		status := p.response.StatusCode
+
+		// If status code has not yet been encountered, add it
+		if _, ok := section.responses.nbStatus[status]; ok == false {
+			section.responses.nbStatus[status] = 0
+		}
+		section.responses.nbStatus[status]++
 	}
 }
 
@@ -103,13 +105,14 @@ func NewSectionStats(domain string, section string) *sectionStats {
 		domain:  domain,
 		section: section,
 		nbHits:  0,
-		nbReqs:  0,
-		nbResp:  0,
-		nb1x:    0,
-		nb2x:    0,
-		nb3x:    0,
-		nb4x:    0,
-		nb5x:    0,
+		requests:requestStats{
+			nbReqs:    0,
+			nbMethods: make(map[string]uint),
+		},
+		responses:responseStats{
+			nbResp:   0,
+			nbStatus: make(map[int]uint),
+		},
 	}
 }
 
