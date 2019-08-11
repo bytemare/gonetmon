@@ -3,10 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"os"
 	"sync"
 )
+
+var log = logrus.New()
 
 // Init initialises Sniffing and Monitoring
 // TODO: Load configuration from file or command line to initialise parameters
@@ -25,6 +27,14 @@ func Init() (*Parameters, *Devices, error) {
 	devices, err := InitialiseCapture(params)
 	if err != nil {
 		return nil, nil, fmt.Errorf("initialising capture failed : %s", err)
+	}
+
+	// Past this point, log to file
+	file, err := os.OpenFile(defLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err == nil {
+		log.Out = file
+	} else {
+		log.Info("Failed to log to file, using default stderr")
 	}
 
 	return params, devices, nil

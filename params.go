@@ -9,6 +9,10 @@ import (
 const (
 	// dataTypes
 	dataHTTP = "http"
+
+	// output
+	consoleOutput = "console"
+	fileOutput    = ""
 )
 
 // CaptureConfig holds configuration for capturing packets
@@ -69,7 +73,7 @@ const (
 
 	// Display Parameters
 	defDisplayRefresh = 5 * time.Second
-	defDisplayType    = "console" // Default output destination
+	defDisplayType    = consoleOutput // Default output destination
 
 	// Format strings for display
 	defAlertFormat    = "High traffic generated an alert - hits = %d, triggered at %s"
@@ -80,6 +84,10 @@ const (
 	defAlertThreshold   = 4
 	defaultWatchdogTick = 500 * time.Millisecond
 	defaultBufSize      = 1000
+
+	// General
+	defLogFile    = "./log-gonetmon.log"
+	defTimeFormat = "2006-01-02 15:04:05.124"
 )
 
 // LoadParams loads the application's parameters it should run on into an object and returns it

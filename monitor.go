@@ -1,7 +1,7 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
 )
@@ -41,7 +41,7 @@ monitorLoop:
 				// Transform data into a more convenient form
 				packet, err := DataToHTTP(&data)
 				if err != nil {
-					log.WithFields(log.Fields{
+					log.WithFields(logrus.Fields{
 						"interface":         data.device,
 						"capture timestamp": data.rawPacket.Metadata().Timestamp,
 						"payload":           strings.Replace(string(data.rawPacket.ApplicationLayer().Payload()), "\n", "{newline}", -1), // Flatten to a single line to avoid breaking log file

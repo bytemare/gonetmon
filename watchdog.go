@@ -3,7 +3,6 @@ package main
 import (
 	"container/list"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -51,9 +50,9 @@ func buildAlertMsg(w *Watchdog, recovery bool, t time.Time) alertMsg {
 	var message string
 
 	if recovery {
-		message = fmt.Sprintf(defRecoveryFormat, t.String())
+		message = fmt.Sprintf(defRecoveryFormat, t.Format(defTimeFormat))
 	} else {
-		message = fmt.Sprintf(defAlertFormat, w.Hits(), t.String())
+		message = fmt.Sprintf(defAlertFormat, w.Hits(), t.Format(defTimeFormat))
 	}
 
 	return alertMsg{

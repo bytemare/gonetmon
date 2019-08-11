@@ -6,7 +6,7 @@ import (
 	"github.com/google/gopacket"
 	_ "github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"net"
 	"strings"
 	"sync"
@@ -22,8 +22,6 @@ type Devices struct {
 // If the interfaces parameter is not nil, only open those specified.
 func InitialiseCapture(parameters *Parameters) (*Devices, error) {
 
-
-
 	devices := findDevices(parameters.Interfaces)
 
 	if devices == nil {
@@ -38,7 +36,7 @@ func InitialiseCapture(parameters *Parameters) (*Devices, error) {
 	for _, d := range devices {
 		// Try to open all devices for capture
 		if h, err := openDevice(d, &parameters.CaptureConfig); err != nil {
-			log.WithFields(log.Fields{
+			log.WithFields(logrus.Fields{
 				"error": err,
 			}).Error("Could not open device for capture.")
 		} else {
@@ -55,11 +53,10 @@ func InitialiseCapture(parameters *Parameters) (*Devices, error) {
 	return devs, nil
 }
 
-
 // selectDevices returns an array of requested interfaces among those available in the devices argument
 func selectDevices(requestedInterfaces []string, devices []net.Interface) ([]net.Interface, error) {
 	var tailoredList []net.Interface
-	interfacesLoop:
+interfacesLoop:
 	for _, i := range requestedInterfaces {
 
 		for index, d := range devices {
@@ -89,14 +86,13 @@ func selectDevices(requestedInterfaces []string, devices []net.Interface) ([]net
 	return tailoredList, nil
 }
 
-
 // findDevices gathers the list of interfaces of the machine that have their state flage UP.
 // If the interfaces parameter is not nil, only list those specified if present.
 func findDevices(requestedInterfaces []string) []net.Interface {
 	devices, err := net.Interfaces()
 
 	if err != nil {
-		log.WithFields(log.Fields{
+		log.WithFields(logrus.Fields{
 			"error": err,
 		}).Error("Error in finding network devices.")
 		return nil
@@ -132,7 +128,7 @@ func findDevices(requestedInterfaces []string) []net.Interface {
 func openDevice(device net.Interface, config *CaptureConfig) (*pcap.Handle, error) {
 	handle, err := pcap.OpenLive(device.Name, config.SnapshotLen, config.PromiscuousMode, config.CaptureTimeout)
 	if err != nil {
-		log.WithFields(log.Fields{
+		log.WithFields(logrus.Fields{
 			"interface": device.Name,
 			"error":     err,
 		}).Error("Could not open device.")
@@ -140,7 +136,7 @@ func openDevice(device net.Interface, config *CaptureConfig) (*pcap.Handle, erro
 		return nil, err
 	}
 
-	log.WithFields(log.Fields{
+	log.WithFields(logrus.Fields{
 		"interface": device.Name,
 	}).Info("Opened device interface.")
 
@@ -221,7 +217,7 @@ func capturePackets(device net.Interface, handle *pcap.Handle, filter *Filter, w
 
 			ip, err := getDeviceIP(&device)
 			if err != nil {
-				log.WithFields(log.Fields{
+				log.WithFields(logrus.Fields{
 					"interface": device.Name,
 					"error":     err,
 				}).Error("Could not extract IP from local network interface")
@@ -250,7 +246,7 @@ func Collector(parameters *Parameters, devices *Devices, packetChan chan packetM
 		collWG.Add(1)
 		h := devices.handles[index]
 		if err := addFilter(h, parameters.PacketFilter.Network); err != nil {
-			log.WithFields(log.Fields{
+			log.WithFields(logrus.Fields{
 				"interface": dev.Name,
 				"error":     err,
 			}).Error("Could not set filter on device. Closing.")

@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/google/gopacket"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"sort"
 	"strings"
@@ -221,7 +221,6 @@ func (a *Analysis) registerHostElements(host string, section string, remoteIP st
 	}
 }
 
-
 // updateAnalysis update's the report's current analysis with the new incoming packet information
 func (a *Analysis) updateAnalysis(p *MetaPacket) {
 
@@ -229,7 +228,7 @@ func (a *Analysis) updateAnalysis(p *MetaPacket) {
 	if p.messageType == httpResponse {
 		host, err := getHost(p, a)
 		if err != nil {
-			log.WithFields(log.Fields{
+			log.WithFields(logrus.Fields{
 				"remote IP": p.remoteIP,
 			}).Error(err)
 			return

@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"strings"
