@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/gopacket"
 	_ "github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -54,9 +55,44 @@ func InitialiseCapture(parameters *Parameters) (*Devices, error) {
 	return devs, nil
 }
 
+
+// selectDevices returns an array of requested interfaces among those available in the devices argument
+func selectDevices(requestedInterfaces []string, devices []net.Interface) ([]net.Interface, error) {
+	var tailoredList []net.Interface
+	interfacesLoop:
+	for _, i := range requestedInterfaces {
+
+		for index, d := range devices {
+
+			if d.Name == i {
+				tailoredList = append(tailoredList, d)
+
+				// Remove the found element from array to avoid it on next iteration
+				// Won't affect current loop since Go uses a copy
+				devices[index] = devices[len(devices)-1]
+				devices = devices[:len(devices)-1]
+
+				log.Info("Found requested interface ", i)
+
+				continue interfacesLoop
+			}
+		}
+
+		// Here, the requested interface is not in the found set
+		log.Error("Could not find requested interface among activated interfaces : ", i)
+	}
+
+	if len(tailoredList) == 0 {
+		return nil, fmt.Errorf("could not find any requested network devices among : %s", requestedInterfaces)
+	}
+
+	return tailoredList, nil
+}
+
+
 // findDevices gathers the list of interfaces of the machine that have their state flage UP.
 // If the interfaces parameter is not nil, only list those specified if present.
-func findDevices(interfaces []string) []net.Interface {
+func findDevices(requestedInterfaces []string) []net.Interface {
 	devices, err := net.Interfaces()
 
 	if err != nil {
@@ -81,38 +117,12 @@ func findDevices(interfaces []string) []net.Interface {
 	}
 
 	// If we want a custom list of interfaces
-	if interfaces != nil {
-		var tailoredList []net.Interface
-
-	interfacesLoop:
-		for _, i := range interfaces {
-
-			for index, d := range devices {
-
-				if d.Name == i {
-					tailoredList = append(tailoredList, d)
-
-					// Remove the found element from array to avoid it on next iteration
-					// Won't affect current loop since Go uses a copy
-					devices[index] = devices[len(devices)-1]
-					devices = devices[:len(devices)-1]
-
-					log.Info("Found requested interface ", i)
-
-					continue interfacesLoop
-				}
-			}
-
-			// Here, the requested interface is not in the found set
-			log.Error("Could not find requested interface among activated interfaces : ", i)
-		}
-
-		if len(tailoredList) == 0 {
-			log.Error("Could not find any requested network devices among : ", interfaces)
+	if requestedInterfaces != nil {
+		devices, err = selectDevices(requestedInterfaces, devices)
+		if err != nil {
+			log.Error(err)
 			return nil
 		}
-
-		devices = tailoredList
 	}
 
 	return devices
