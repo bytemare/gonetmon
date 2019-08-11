@@ -11,21 +11,14 @@ import (
 	"sync"
 )
 
-// TODO : don't keep values here
-var (
-	snapshotLen int32 = 1024
-	promiscuous       = false
-	timeout           = defDisplayRefresh //10 * time.Second
-)
-
 type Devices struct {
-	devices		[]net.Interface
-	handles		[]*pcap.Handle
+	devices []net.Interface
+	handles []*pcap.Handle
 }
 
 // InitialiseCapture opens device interfaces and associated handles to listen on, returns a map of these.
 // If the interfaces parameter is not nil, only open those specified.
-func InitialiseCapture(interfaces []string) (*Devices, error) {
+func InitialiseCapture(interfaces []string, config *CaptureConfig) (*Devices, error) {
 
 	var err error
 
@@ -42,7 +35,7 @@ func InitialiseCapture(interfaces []string) (*Devices, error) {
 	err = nil
 	for _, d := range devices {
 		// Try to open all devices for capture
-		if h, err := openDevice(d); err != nil {
+		if h, err := openDevice(d, config); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).Error("Could not open device for capture.")
@@ -90,7 +83,7 @@ func findDevices(interfaces []string) []net.Interface {
 	if interfaces != nil {
 		var tailoredList []net.Interface
 
-		interfacesLoop:
+	interfacesLoop:
 		for _, i := range interfaces {
 
 			for index, d := range devices {
@@ -125,8 +118,8 @@ func findDevices(interfaces []string) []net.Interface {
 }
 
 // openDevice opens a live listener on the interface designated by the device parameter and returns a corresponding handle
-func openDevice(device net.Interface) (*pcap.Handle, error) {
-	handle, err := pcap.OpenLive(device.Name, snapshotLen, promiscuous, timeout)
+func openDevice(device net.Interface, config *CaptureConfig) (*pcap.Handle, error) {
+	handle, err := pcap.OpenLive(device.Name, config.SnapshotLen, config.PromiscuousMode, config.CaptureTimeout)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"interface": device.Name,
@@ -174,7 +167,6 @@ func sniffApplicationLayer(packet gopacket.Packet, filter string) bool {
 	return isApp
 }
 
-
 // getRemoteIP extracts the IP address of the remote peer from packet
 func getRemoteIP(packet gopacket.Packet, deviceIP string) string {
 	src, dst := packet.NetworkLayer().NetworkFlow().Endpoints()
@@ -182,7 +174,7 @@ func getRemoteIP(packet gopacket.Packet, deviceIP string) string {
 	var rip string
 
 	// The deviceIP is among these two, so we return the other
-	if strings.Compare(deviceIP, src.String()) == 0{
+	if strings.Compare(deviceIP, src.String()) == 0 {
 		rip = dst.String()
 	} else {
 		rip = src.String()
@@ -193,7 +185,6 @@ func getRemoteIP(packet gopacket.Packet, deviceIP string) string {
 	return rip
 }
 
-
 // getDeviceIP extracts the interface's local IP address
 func getDeviceIP(device *net.Interface) (string, error) {
 	add, err := device.Addrs()
@@ -203,7 +194,6 @@ func getDeviceIP(device *net.Interface) (string, error) {
 	address := add[0].String()[:strings.IndexByte(add[0].String(), '/')]
 	return address, nil
 }
-
 
 // capturePacket continuously listens to a device interface managed by handle, and extracts relevant packets from traffic
 // to send it to packetChan
@@ -229,8 +219,8 @@ func capturePackets(device net.Interface, handle *pcap.Handle, filter *Filter, w
 			packetChan <- packetMsg{
 				dataType:  filter.Type,
 				device:    device.Name,
-				deviceIP: ip,
-				remoteIP: getRemoteIP(packet, ip),
+				deviceIP:  ip,
+				remoteIP:  getRemoteIP(packet, ip),
 				rawPacket: packet,
 			}
 		}

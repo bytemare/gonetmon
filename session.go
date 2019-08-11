@@ -7,12 +7,23 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 )
 
+// Placeholder for current analysis and report, and Watchdog reference
 type session struct {
+	analysis *analysis // Current ongoing analysis
 	report   *Report   // Current report
 	watchdog *Watchdog // Surveil traffic behaviour and raise alert if need
-	alert    bool      // Current alert status
+}
+
+// NewSession initialises a new monitoring session and launches a Watchdog goroutine
+func NewSession(parameters *Parameters, alertChan chan<- alertMsg, syncChan <-chan struct{}, wg *sync.WaitGroup) *session {
+	return &session{
+		analysis: NewAnalysis(),
+		report:   NewReport(),
+		watchdog: NewWatchdog(parameters, alertChan, syncChan, wg),
+	}
 }
 
 func readRequest(b *bufio.Reader) (*http.Request, error) {
@@ -58,8 +69,6 @@ func NewMetaPacket(data *packetMsg) *MetaPacket {
 		packet:      data.rawPacket,
 	}
 }
-
-
 
 // DataToHTTP transforms the raw payload into a MetaPacket struct.
 // Returns nil wth an error if data does not contain a valid http payload

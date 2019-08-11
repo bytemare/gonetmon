@@ -8,18 +8,13 @@ import (
 	"time"
 )
 
-const (
-	defaultTick    = 500 * time.Millisecond
-	defaultBufSize = 1000
-)
-
 type hitCache struct {
 
 	// Channels to send operations on
 	push    chan time.Time
-	bufSize uint // size of channels
+	bufSize uint // size of channel
 
-	// Doubly linked list
+	// Doubly linked list to hold values
 	list list.List
 
 	// Number of elements in current list
@@ -30,9 +25,9 @@ type hitCache struct {
 type Watchdog struct {
 
 	// Cache to store timely identified hits and time window to keep them
-	cache  hitCache
-	window time.Duration
-	tick   time.Duration
+	cache     hitCache
+	timeFrame time.Duration
+	tick      time.Duration
 
 	// Threshold above which an alert will be raised
 	threshold uint
@@ -117,7 +112,7 @@ func (w *Watchdog) evict(now time.Time) {
 		e := w.cache.list.Front()
 
 		// If the element is older than allowed window
-		if now.Sub(e.Value.(time.Time)) > w.window {
+		if now.Sub(e.Value.(time.Time)) > w.timeFrame {
 			w.cache.list.Remove(e)
 			w.cache.size--
 		} else {
@@ -128,28 +123,24 @@ func (w *Watchdog) evict(now time.Time) {
 }
 
 // NewWatchdog returns a watchdog struct and launches a goroutine that will observe its cache to detect alert triggering
-func NewWatchdog(window time.Duration, tick time.Duration, threshold uint, c chan<- alertMsg, bufSize uint, stop <-chan struct{}, wg *sync.WaitGroup) *Watchdog {
+func NewWatchdog(parameters *Parameters, c chan<- alertMsg, stop <-chan struct{}, wg *sync.WaitGroup) *Watchdog {
 
 	wg.Add(1)
 
 	dog := Watchdog{
 		cache: hitCache{
-			push:    make(chan time.Time, bufSize),
-			bufSize: bufSize,
+			push:    make(chan time.Time, parameters.WatchdogBufSize),
+			bufSize: parameters.WatchdogBufSize,
 			list:    list.List{},
 			size:    0,
 		},
-		window:    window,
-		tick:      tick,
-		threshold: threshold,
+		timeFrame: parameters.AlertSpan,
+		tick:      parameters.WatchdogTick,
+		threshold: parameters.AlertThreshold,
 		alertChan: c,
 		alert:     false,
 		stop:      stop,
 		wg:        wg,
-	}
-
-	if tick == 0 {
-		dog.tick = defaultTick
 	}
 
 	ticker := time.NewTicker(dog.tick)

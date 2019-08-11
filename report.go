@@ -20,8 +20,8 @@ const (
 type MetaPacket struct {
 	messageType string // Either request or response
 	device      string // Interface on which the packet was recorded
-	deviceIP  string // IP address of local network device interface
-	remoteIP  string // IP address or remote peer
+	deviceIP    string // IP address of local network device interface
+	remoteIP    string // IP address or remote peer
 
 	// Request information
 	request *http.Request
@@ -30,82 +30,83 @@ type MetaPacket struct {
 	response *http.Response
 
 	// Associated Captured Packet
-	packet		gopacket.Packet
+	packet gopacket.Packet
 }
 
 type requestStats struct {
-	nbReqs		uint				// Sum of all the elements
-	nbMethods	map[string]uint	// Map request methods to the number of times they were encountered
+	nbReqs    uint            // Sum of all the elements
+	nbMethods map[string]uint // Map request methods to the number of times they were encountered
 }
 
 type responseStats struct {
-	nbResp		uint			// Sum of all registered elements
-	nbStatus	map[int]uint	// Map status codes to the number of times they were encountered
+	nbResp   uint         // Sum of all registered elements
+	nbStatus map[int]uint // Map status codes to the number of times they were encountered
 }
 
 type sectionStats struct {
-	section string
-	nbHits  int
-	requests	requestStats
+	section  string
+	nbHits   int
+	requests requestStats
 }
 
 type hostStats struct {
-	host      string
-	ips		  []string
-	sections  map[string]*sectionStats
+	host     string
+	ips      []string
+	sections map[string]*sectionStats
 	// Statistics about responses on that host
-	responses	responseStats
+	responses responseStats
 }
 
+// analysis holds the packets and the result of a recording window
 type analysis struct {
-	nbHosts int
-	hosts   map[string]*hostStats
-	lastSeenHost	*hostStats
+	packets      []*MetaPacket // A set of packets to be analysed
+	nbHosts      int
+	hosts        map[string]*hostStats
+	lastSeenHost *hostStats
 }
 
-// Report holds the packets and the result of a recording window
+// Report holds the final result of an analysis, to be sent out to display()
 type Report struct {
-	packets  []*MetaPacket // A set of packets to be analysed
-	analysis analysis      // Final analysis of data
+	topDomain string
+	responses responseStats
+	sections  sectionStats
+	analysis  analysis
 }
-
 
 // Update statistics of a section with new data
-func (r *Report) updateSectionStats(hostname string, sectionName string, p *MetaPacket) {
+func (a *analysis) updateSectionStats(hostname string, sectionName string, req *http.Request) {
 
-	// Update Request/Response counters
-	if p.messageType == httpRequest {
+	host := a.hosts[hostname]
+	a.lastSeenHost = host
+	section := host.sections[sectionName]
 
-		host := r.analysis.hosts[hostname]
-		section := host.sections[sectionName]
+	// Update Hits
+	section.nbHits++
+	section.requests.nbReqs++
 
-		// Update Hits
-		section.nbHits++
-		section.requests.nbReqs++
+	method := req.Method
 
-		method := p.request.Method
-
-		// If method was not yet registered, do it
-		if _, ok := section.requests.nbMethods[method]; ok == false {
-			section.requests.nbMethods[method] = 0
-		}
-		section.requests.nbMethods[method]++
+	// If method was not yet registered, do it
+	if _, ok := section.requests.nbMethods[method]; ok == false {
+		section.requests.nbMethods[method] = 0
 	}
+	section.requests.nbMethods[method]++
 }
 
-func (r *Report) updateResponseStats(hostname string, p *MetaPacket) {
+// updateResponseStats updates data for hostname with relevant data
+func (a *analysis) updateResponseStats(hostname string, res *http.Response) {
 
-	resp := r.analysis.hosts[hostname].responses
+	host := a.hosts[hostname]
 
-	resp.nbResp++
+	a.lastSeenHost = host
+	host.responses.nbResp++
 
-	status := p.response.StatusCode
-
+	status := res.StatusCode
 	// If status code has not yet been encountered, add it
-	if _, ok := resp.nbStatus[status]; ok == false {
-		resp.nbStatus[status] = 0
+	if _, ok := host.responses.nbStatus[status]; ok == false {
+		host.responses.nbStatus[status] = 0
 	}
-	resp.nbStatus[status]++
+	host.responses.nbStatus[status]++
 }
 
 // NewSectionStats returns an empty set of statistics about a section
@@ -113,7 +114,7 @@ func NewSectionStats(section string) *sectionStats {
 	return &sectionStats{
 		section: section,
 		nbHits:  0,
-		requests:  requestStats{
+		requests: requestStats{
 			nbReqs:    0,
 			nbMethods: make(map[string]uint),
 		},
@@ -122,9 +123,9 @@ func NewSectionStats(section string) *sectionStats {
 
 func NewHostStats(host string) *hostStats {
 	return &hostStats{
-		host:      host,
-		ips: []string{},
-		sections:  make(map[string]*sectionStats),
+		host:     host,
+		ips:      []string{},
+		sections: make(map[string]*sectionStats),
 		responses: responseStats{
 			nbResp:   0,
 			nbStatus: make(map[int]uint),
@@ -132,7 +133,7 @@ func NewHostStats(host string) *hostStats {
 	}
 }
 
-func getHost(p *MetaPacket, r *Report) (string, error) {
+func getHost(p *MetaPacket, a *analysis) (string, error) {
 
 	// If it's a request, it's in the header
 	if p.messageType == httpRequest {
@@ -140,16 +141,16 @@ func getHost(p *MetaPacket, r *Report) (string, error) {
 	}
 
 	// Verify if the ip corresponds to the last encountered host
-	for _, ip := range r.analysis.lastSeenHost.ips {
+	for _, ip := range a.lastSeenHost.ips {
 		if strings.Compare(ip, p.remoteIP) == 0 {
-			return r.analysis.lastSeenHost.host, nil
+			return a.lastSeenHost.host, nil
 		}
 	}
 
 	// Iterate over all encountered hosts
-	for host, stat := range r.analysis.hosts {
+	for host, stat := range a.hosts {
 		for _, ip := range stat.ips {
-			if strings.Compare(ip, p.remoteIP) == 0{
+			if strings.Compare(ip, p.remoteIP) == 0 {
 				return host, nil
 			}
 		}
@@ -170,30 +171,29 @@ func getSection(p *MetaPacket) (string, error) {
 	return "", errors.New("could not extract section from packet")
 }
 
-
 // updateAnalysis update's the report's current analysis with the new incoming packet information
-func (r *Report) updateAnalysis(p *MetaPacket){
+func (a *analysis) updateAnalysis(p *MetaPacket) {
 
 	// If it is a response, we must have seen the corresponding host before, or we cannot work with it
 	if p.messageType == httpResponse {
-		host, err := getHost(p, r)
+		host, err := getHost(p, a)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"remote IP": p.remoteIP,
 			}).Error(err)
 			return
 		}
-		r.updateResponseStats(host, p)
+		a.updateResponseStats(host, p.response)
 	} else {
 
 		// Here, it is a request
-		host, _ := getHost(p, r)
+		host, _ := getHost(p, a)
 		section, _ := getSection(p)
 
-		hosts := r.analysis.hosts
+		hosts := a.hosts
 
 		// If host not registered, create new
-		if _, ok := r.analysis.hosts[host]; ok == false {
+		if _, ok := a.hosts[host]; ok == false {
 			// Register new host and section
 			hosts[host] = NewHostStats(host)
 			hosts[host].ips = append(hosts[host].ips, p.remoteIP)
@@ -203,7 +203,7 @@ func (r *Report) updateAnalysis(p *MetaPacket){
 			// Verify if remote IP was registered for this host
 			b := false
 			for _, ip := range hosts[host].ips {
-				if strings.Compare(ip, p.remoteIP) == 0{
+				if strings.Compare(ip, p.remoteIP) == 0 {
 					b = true
 				}
 			}
@@ -219,26 +219,28 @@ func (r *Report) updateAnalysis(p *MetaPacket){
 		}
 
 		// Update statistics
-		r.updateSectionStats(host, section, p)
+		a.updateSectionStats(host, section, p.request)
 	}
 }
 
 // AddPacket adds a packet to the report
-func (r *Report) AddPacket(p *MetaPacket) {
-	r.packets = append(r.packets, p)
+func (a *analysis) AddPacket(p *MetaPacket) {
+	a.packets = append(a.packets, p)
 
-	r.updateAnalysis(p)
+	a.updateAnalysis(p)
 }
 
-func (r *Report) build() {
+func (a *analysis) build() {
 	// TODO : finish analysis of the report and build the final thing
 
-	1. for each domain, count the number of total hits
-	2. for the domain with most hits, sort sections per hits
-	3. build report
+	/*
+		1. for each domain, count the number of total hits
+		2. for the domain with most hits, sort sections per hits
+		3. build report
+	*/
 }
 
-func buildReportMsg(r *Report) reportMsg {
+func buildReportMsg(r *analysis) reportMsg {
 	// TODO : build a report message from the report
 	msg := reportMsg{
 		report:    r,
@@ -248,13 +250,21 @@ func buildReportMsg(r *Report) reportMsg {
 	return msg
 }
 
-// NewReport returns a new and empty Report struct
+// NewAnalysis returns a new and empty Analysis struct
+func NewAnalysis() *analysis {
+	return &analysis{
+		packets:      nil,
+		nbHosts:      0,
+		hosts:        make(map[string]*hostStats),
+		lastSeenHost: nil,
+	}
+}
+
 func NewReport() *Report {
 	return &Report{
-		packets:  []*MetaPacket{},
-		analysis: analysis{
-			nbHosts: 0,
-			hosts:   make(map[string]*hostStats),
-		},
+		topDomain: "",
+		responses: nil,
+		sections:  nil,
+		analysis:  nil,
 	}
 }

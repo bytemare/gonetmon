@@ -11,11 +11,7 @@ import (
 func Monitor(parameters *Parameters, packetChan <-chan packetMsg, reportChan chan<- reportMsg, alertChan chan<- alertMsg, syncChan <-chan struct{}, wg *sync.WaitGroup) {
 
 	// Start a new monitoring session
-	session := session{
-		report:   NewReport(),
-		watchdog: NewWatchdog(parameters.AlertSpan, defaultTick, parameters.AlertThreshold, alertChan, defaultBufSize, syncChan, wg),
-		alert:    false,
-	}
+	session := NewSession(parameters, alertChan, syncChan, wg)
 
 	// Set up ticker to regularly send reports to display
 	tickerReport := time.NewTicker(time.Second * parameters.DisplayRefresh)
@@ -44,14 +40,14 @@ monitorLoop:
 			log.Info("[i] Monitor pulled data.")
 
 			// Handle http data type
-			if data.dataType == dataHTTP {
+			if data.dataType == parameters.PacketFilter.Type {
 				// Transform data into a more convenient form
 				packet, err := DataToHTTP(&data)
 				if err != nil {
 					log.WithFields(log.Fields{
-						"interface": data.device,
+						"interface":         data.device,
 						"capture timestamp": data.rawPacket.Metadata().Timestamp,
-						"payload": strings.Replace(string(data.rawPacket.ApplicationLayer().Payload()), "\n", "{newline}", -1), // Flatten to a single line to avoid breaking log file
+						"payload":           strings.Replace(string(data.rawPacket.ApplicationLayer().Payload()), "\n", "{newline}", -1), // Flatten to a single line to avoid breaking log file
 					}).Error("Could not interpret package as http.")
 					continue
 				}
