@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/google/gopacket"
+	_ "github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	log "github.com/sirupsen/logrus"
 	"net"
@@ -178,11 +179,18 @@ func sniffApplicationLayer(packet gopacket.Packet, filter string) bool {
 func getRemoteIP(packet gopacket.Packet, deviceIP string) string {
 	src, dst := packet.NetworkLayer().NetworkFlow().Endpoints()
 
+	var rip string
+
 	// The deviceIP is among these two, so we return the other
 	if strings.Compare(deviceIP, src.String()) == 0{
-		return dst.String()
+		rip = dst.String()
+	} else {
+		rip = src.String()
 	}
-	return src.String()
+
+	log.Info("Remote peer address ", rip)
+
+	return rip
 }
 
 
