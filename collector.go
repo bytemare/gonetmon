@@ -21,19 +21,19 @@ type Devices struct {
 // If the interfaces parameter is not nil, only open those specified.
 func InitialiseCapture(parameters *Parameters) (*Devices, error) {
 
-	var err error
+
 
 	devices := findDevices(parameters.Interfaces)
 
 	if devices == nil {
-		return nil, err
+		return nil, errors.New("could not find any devices")
 	}
 
 	devs := &Devices{
 		devices: []net.Interface{},
 		handles: []*pcap.Handle{},
 	}
-	err = nil
+
 	for _, d := range devices {
 		// Try to open all devices for capture
 		if h, err := openDevice(d, &parameters.CaptureConfig); err != nil {
