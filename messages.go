@@ -2,14 +2,16 @@ package main
 
 import (
 	"github.com/google/gopacket"
+	"net"
 	"time"
 )
 
 type packetMsg struct {
 	dataType  string // Kind of data, for now just http packet
 	device    string // Interface on which the traffic was recorded
+	deviceIP  net.IP // IP address of local network device interface
+	remoteIP  net.IP // IP address or remote peer
 	rawPacket gopacket.Packet // Actual packet payload
-	timestamp time.Time
 }
 
 type reportMsg struct {
