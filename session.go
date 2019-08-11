@@ -46,24 +46,32 @@ func readResponse(b *bufio.Reader) (*http.Response, error) {
 	return resp, nil
 }
 
+// NewMetaPacket returns a new struct initialised with values from the packetMsg
+func NewMetaPacket(data *packetMsg) *MetaPacket {
+	return &MetaPacket{
+		messageType: "",
+		device:      data.device,
+		deviceIP:    data.deviceIP,
+		remoteIP:    data.remoteIP,
+		request:     nil,
+		response:    nil,
+		packet:      data.rawPacket,
+	}
+}
+
+
+
 // DataToHTTP transforms the raw payload into a MetaPacket struct.
 // Returns nil wth an error if data does not contain a valid http payload
-func DataToHTTP(data packetMsg) (*MetaPacket, error) {
+func DataToHTTP(data *packetMsg) (*MetaPacket, error) {
+
+	packet := NewMetaPacket(data)
 
 	appPayload := string(data.rawPacket.ApplicationLayer().Payload())
-
 	// In order to use the /net/http functions to interpret http packets,
 	// we have to present *bufio.Reader containing the payload
 	b := []byte(appPayload)
 	bufReader := bufio.NewReader(bytes.NewReader(b))
-
-	packet := &MetaPacket{
-		messageType: "",
-		device:      data.device,
-		request:     nil,
-		response:    nil,
-		packet:		 &data.rawPacket,
-	}
 
 	// If it is a Response, it starts with 'HTTP/'
 	if strings.HasPrefix(appPayload, "HTTP/") {
