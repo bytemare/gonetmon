@@ -7,25 +7,28 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"sync"
 )
 
 // Placeholder for current analysis and report, and Watchdog reference
-type session struct {
-	analysis *analysis // Current ongoing analysis
-	report   *Report   // Current report
+type Session struct {
+	analysis *Analysis // Current ongoing analysis
 	watchdog *Watchdog // Surveil traffic behaviour and raise alert if need
 }
 
 // NewSession initialises a new monitoring session and launches a Watchdog goroutine
-func NewSession(parameters *Parameters, alertChan chan<- alertMsg, syncChan <-chan struct{}, wg *sync.WaitGroup) *session {
-	return &session{
+func NewSession(parameters *Parameters, alertChan chan<- alertMsg, syn *Sync) *Session {
+	return &Session{
 		analysis: NewAnalysis(),
-		report:   NewReport(),
-		watchdog: NewWatchdog(parameters, alertChan, syncChan, wg),
+		watchdog: NewWatchdog(parameters, alertChan, syn),
 	}
 }
 
+// BuildReport calls for a final analysis and collects the resulting report
+func (s*Session) BuildReport() *Report {
+	return NewReport(s.analysis)
+}
+
+// readRequest is a wrapper around http.ReadRequest
 func readRequest(b *bufio.Reader) (*http.Request, error) {
 	req, err := http.ReadRequest(b)
 	if err == io.EOF {
@@ -40,6 +43,7 @@ func readRequest(b *bufio.Reader) (*http.Request, error) {
 	return req, nil
 }
 
+// readResponse is a wrapper around http.ReadResponse
 func readResponse(b *bufio.Reader) (*http.Response, error) {
 
 	resp, err := http.ReadResponse(b, nil)
@@ -55,19 +59,6 @@ func readResponse(b *bufio.Reader) (*http.Response, error) {
 	}
 
 	return resp, nil
-}
-
-// NewMetaPacket returns a new struct initialised with values from the packetMsg
-func NewMetaPacket(data *packetMsg) *MetaPacket {
-	return &MetaPacket{
-		messageType: "",
-		device:      data.device,
-		deviceIP:    data.deviceIP,
-		remoteIP:    data.remoteIP,
-		request:     nil,
-		response:    nil,
-		packet:      data.rawPacket,
-	}
 }
 
 // DataToHTTP transforms the raw payload into a MetaPacket struct.
