@@ -18,11 +18,11 @@ type Devices struct {
 
 // InitialiseCapture opens device interfaces and associated handles to listen on, returns a map of these.
 // If the interfaces parameter is not nil, only open those specified.
-func InitialiseCapture(interfaces []string, config *CaptureConfig) (*Devices, error) {
+func InitialiseCapture(parameters *Parameters) (*Devices, error) {
 
 	var err error
 
-	devices := findDevices(interfaces)
+	devices := findDevices(parameters.Interfaces)
 
 	if devices == nil {
 		return nil, err
@@ -35,7 +35,7 @@ func InitialiseCapture(interfaces []string, config *CaptureConfig) (*Devices, er
 	err = nil
 	for _, d := range devices {
 		// Try to open all devices for capture
-		if h, err := openDevice(d, config); err != nil {
+		if h, err := openDevice(d, &parameters.CaptureConfig); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).Error("Could not open device for capture.")
@@ -230,12 +230,12 @@ func capturePackets(device net.Interface, handle *pcap.Handle, filter *Filter, w
 }
 
 // Collector listens on all network devices for relevant traffic and sends packets to packetChan
-func Collector(parameters *Parameters, devices *Devices, packetChan chan packetMsg, syncChan <-chan struct{}, syncwg *sync.WaitGroup) {
+func Collector(parameters *Parameters, devices *Devices, packetChan chan packetMsg, syn *Sync) {
 
-	wg := sync.WaitGroup{}
+	collWG := sync.WaitGroup{}
 
 	for index, dev := range devices.devices {
-		wg.Add(1)
+		collWG.Add(1)
 		h := devices.handles[index]
 		if err := addFilter(h, parameters.PacketFilter.Network); err != nil {
 			log.WithFields(log.Fields{
@@ -244,18 +244,18 @@ func Collector(parameters *Parameters, devices *Devices, packetChan chan packetM
 			}).Error("Could not set filter on device. Closing.")
 			closeDevice(h)
 		}
-		go capturePackets(dev, h, &parameters.PacketFilter, &wg, packetChan)
+		go capturePackets(dev, h, &parameters.PacketFilter, &collWG, packetChan)
 	}
 
 	// Wait until sync to stop
-	<-syncChan
+	<-syn.syncChan
 
-	// Inform goroutines to stop
+	// Inform goroutines to stop by closing their handles
 	closeDevices(devices)
 
 	// Wait for goroutines to stop
 	log.Info("Collector waiting for subs...")
-	wg.Wait()
+	collWG.Wait()
 	log.Info("Collector terminating")
-	syncwg.Done()
+	syn.wg.Done()
 }

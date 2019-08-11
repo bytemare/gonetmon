@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"sync"
 	"time"
 )
 
@@ -39,8 +38,7 @@ type Watchdog struct {
 	alert bool
 
 	// Synchronisation
-	stop <-chan struct{}
-	wg   *sync.WaitGroup
+	syn *Sync
 }
 
 // Hits returns the current number of elements in the cache
@@ -123,9 +121,9 @@ func (w *Watchdog) evict(now time.Time) {
 }
 
 // NewWatchdog returns a watchdog struct and launches a goroutine that will observe its cache to detect alert triggering
-func NewWatchdog(parameters *Parameters, c chan<- alertMsg, stop <-chan struct{}, wg *sync.WaitGroup) *Watchdog {
+func NewWatchdog(parameters *Parameters, c chan<- alertMsg, syn *Sync) *Watchdog {
 
-	wg.Add(1)
+	syn.addRoutine()
 
 	dog := Watchdog{
 		cache: hitCache{
@@ -139,8 +137,7 @@ func NewWatchdog(parameters *Parameters, c chan<- alertMsg, stop <-chan struct{}
 		threshold: parameters.AlertThreshold,
 		alertChan: c,
 		alert:     false,
-		stop:      stop,
-		wg:        wg,
+		syn:	syn,
 	}
 
 	ticker := time.NewTicker(dog.tick)
@@ -152,7 +149,7 @@ func NewWatchdog(parameters *Parameters, c chan<- alertMsg, stop <-chan struct{}
 			select {
 
 			// Synchronisation/Exit trigger
-			case <-stop:
+			case <-syn.syncChan:
 				log.Info("Watchdog terminating.")
 				break watchdogLoop
 
@@ -168,7 +165,7 @@ func NewWatchdog(parameters *Parameters, c chan<- alertMsg, stop <-chan struct{}
 				dog.verify()
 			}
 		}
-		wg.Done()
+		syn.wg.Done()
 	}()
 
 	return &dog

@@ -1,7 +1,10 @@
 // Params loads and holds configuration for runtime
 package main
 
-import "time"
+import (
+	"sync"
+	"time"
+)
 
 const (
 	// dataTypes
@@ -18,6 +21,19 @@ type Filter struct {
 	Network     string // BPF filter to filter traffic at data layer
 	Application string // String to look for in Application Layer
 	Type        string // Monitor filter in case further development adds other traffic analysis
+}
+
+// Sync is a placeholder for synchronisation tools across goroutines
+type Sync struct {
+	wg			sync.WaitGroup
+	syncChan	chan struct{}
+	nbReceivers	int
+}
+
+// addRoutine increments the number of goroutines to be synced and waiting for a message on the channel
+func (s *Sync) addRoutine() {
+	s.wg.Add(1)
+	s.nbReceivers++
 }
 
 // Parameters holds the application's parameters it runs on

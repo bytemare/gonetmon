@@ -8,24 +8,23 @@ import (
 	log "github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 )
 
 // command handles CLI interactions
-func command(syncChan chan<- struct{}, nbReceivers int, wg *sync.WaitGroup) {
+func command(syn *Sync) {
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	for sig := range sigs {
 		log.Info("command received signal :", sig.String())
-		for n := 0; n < nbReceivers; n++ {
-			syncChan <- struct{}{}
+		for n := 1; n < syn.nbReceivers; n++ {
+			syn.syncChan <- struct{}{}
 		}
 		break
 	}
 
 	log.Info("command terminating.")
-	wg.Done()
+	syn.wg.Done()
 }

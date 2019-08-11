@@ -3,15 +3,14 @@ package main
 import (
 	log "github.com/sirupsen/logrus"
 	"strings"
-	"sync"
 	"time"
 )
 
 // Monitor is a goroutine that listen on the dataChan channel to pull data packets for analysis
-func Monitor(parameters *Parameters, packetChan <-chan packetMsg, reportChan chan<- reportMsg, alertChan chan<- alertMsg, syncChan <-chan struct{}, wg *sync.WaitGroup) {
+func Monitor(parameters *Parameters, packetChan <-chan packetMsg, reportChan chan<- *Report, alertChan chan<- alertMsg, syn *Sync) {
 
 	// Start a new monitoring session
-	session := NewSession(parameters, alertChan, syncChan, wg)
+	session := NewSession(parameters, alertChan, syn)
 
 	// Set up ticker to regularly send reports to display
 	tickerReport := time.NewTicker(time.Second * parameters.DisplayRefresh)
@@ -20,24 +19,18 @@ monitorLoop:
 	for {
 		select {
 
-		case <-syncChan:
-			log.Info("[i] Monitor received sync message")
+		case <-syn.syncChan:
+			log.Info("Monitor received sync message")
 			break monitorLoop
 
 		case tr := <-tickerReport.C:
-			log.Info("[i] Monitor : time for building and displaying a report :", tr)
+			log.Info("Monitor : time for building and displaying a report :", tr)
 
-			// Build report
-			session.report.build()
-
-			// Send report to display
-			reportChan <- buildReportMsg(session.report)
-
-			// Reset report
-			session.report = NewReport()
+			// Build report and send to display
+			reportChan <- session.BuildReport()
 
 		case data := <-packetChan:
-			log.Info("[i] Monitor pulled data.")
+			log.Info("Monitor pulled data.")
 
 			// Handle http data type
 			if data.dataType == parameters.PacketFilter.Type {
@@ -53,7 +46,7 @@ monitorLoop:
 				}
 
 				// Add packet to analysis
-				session.report.AddPacket(packet)
+				session.analysis.AddPacket(packet)
 
 				// Update Watchdog
 				session.watchdog.AddHit(packet.packet.Metadata().Timestamp)
@@ -62,5 +55,6 @@ monitorLoop:
 
 	}
 
-	wg.Done()
+	log.Info("Monitor terminating")
+	syn.wg.Done()
 }

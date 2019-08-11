@@ -1,59 +1,76 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"sync"
 )
 
-func main() {
+// Initialises Sniffing and Monitoring
+// TODO: Load configuration from file or command line to initialise parameters
+func Init() (*Parameters, *Devices, error) {
 
-	//TODO : do proper prompt to ask for privileges
+	// Must be root or sudo
 	if os.Geteuid() != 0 {
-		log.Fatal("You must run this program with elevated privileges in order to capture traffic. Try running with sudo.")
+		log.Error("Geteuid is not 0 : not running with elevated privileges.")
+		return nil, nil, errors.New("you must run this program with elevated privileges in order to capture traffic. Try running with sudo")
 	}
 
-	// Load parameters
+	// Load default parameters
 	params := LoadParams()
 
-	// Check whether we can run
-	devices, err := InitialiseCapture(params.Interfaces)
+	// Check whether we can capture packets
+	devices, err := InitialiseCapture(params)
 	if err != nil {
-		log.Fatal("Initialising capture failed. Exiting")
+		return nil, nil, fmt.Errorf("initialising capture failed : %s", err)
+	}
+
+	return params, devices, nil
+}
+
+func main() {
+
+	params, devices, err := Init()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// IPCs
-	var nbReceivers = 1
-	var wg sync.WaitGroup
+	syn := &Sync{
+		wg:          sync.WaitGroup{},
+		syncChan:    make(chan struct{}),
+		nbReceivers: 0,
+	}
+
+	//var nbReceivers = 1
+	//var wg sync.WaitGroup
 	packetChan := make(chan packetMsg, 1000)
-	reportChan := make(chan reportMsg, 1)
+	reportChan := make(chan *Report, 1)
 	alertChan := make(chan alertMsg, 1)
-	syncChan := make(chan struct{})
 
 	// Run Sniffer/Collector
-	nbReceivers++
-	wg.Add(1)
-	go Collector(params, devices, packetChan, syncChan, &wg)
+	syn.addRoutine()
+	go Collector(params, devices, packetChan, syn)
 
 	// Run monitoring
-	nbReceivers += 2 // Todo : change that
-	wg.Add(1)
-	go Monitor(params, packetChan, reportChan, alertChan, syncChan, &wg)
+	syn.addRoutine()
+	go Monitor(params, packetChan, reportChan, alertChan, syn)
 
 	// Run display to print result
-	nbReceivers++
-	wg.Add(1)
-	go Display(params, reportChan, alertChan, syncChan, &wg)
+	syn.addRoutine()
+	go Display(params, reportChan, alertChan, syn)
 
 	// Run command
-	wg.Add(1)
-	go command(syncChan, nbReceivers, &wg)
+	syn.addRoutine()
+	go command(syn)
 
 	log.Info("Capturing set up.")
 
 	// Shutdown
-	<-syncChan
+	<-syn.syncChan
 	log.Info("Waiting for all processes to stop.")
-	wg.Wait()
+	syn.wg.Wait()
 	log.Info("Monitoring successfully stopped.")
 }

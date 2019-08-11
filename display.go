@@ -2,22 +2,21 @@ package main
 
 import (
 	log "github.com/sirupsen/logrus"
-	"sync"
 )
 
-func outputReport(r *reportMsg, output string) {
+func outputReport(r *Report, output string) {
 	// TODO
 	log.Info("[i] Display received a report to '%s' : '%s' !\n", output, r)
 }
 
 // Display loops on receiving channels to print alerts and reports
-func Display(parameters *Parameters, reportChan <-chan reportMsg, alertChan <-chan alertMsg, syncChan <-chan struct{}, wg *sync.WaitGroup) {
+func Display(parameters *Parameters, reportChan <-chan *Report, alertChan <-chan alertMsg, syn *Sync) {
 
 displayLoop:
 	for {
 		select {
 
-		case <-syncChan:
+		case <-syn.syncChan:
 			break displayLoop
 
 		case alert := <-alertChan:
@@ -30,10 +29,10 @@ displayLoop:
 
 		case report := <-reportChan:
 			// Interpret report and adapt to desired output
-			outputReport(&report, parameters.DisplayType)
+			outputReport(report, parameters.DisplayType)
 		}
 	}
 
 	log.Info("Display terminating.")
-	wg.Done()
+	syn.wg.Done()
 }
