@@ -50,9 +50,9 @@ func buildAlertMsg(w *Watchdog, recovery bool, t time.Time) alertMsg {
 	var message string
 
 	if recovery {
-		message = fmt.Sprintf(defRecoveryFormat, t.Format(defTimeFormat))
+		message = fmt.Sprintf(defRecoveryFormat, t.Format(defTimeLayout))
 	} else {
-		message = fmt.Sprintf(defAlertFormat, w.Hits(), t.Format(defTimeFormat))
+		message = fmt.Sprintf(defAlertFormat, w.Hits(), t.Format(defTimeLayout))
 	}
 
 	return alertMsg{

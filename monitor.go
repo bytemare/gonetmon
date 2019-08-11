@@ -25,7 +25,7 @@ monitorLoop:
 			break monitorLoop
 
 		case tr := <-tickerReport.C:
-			log.Info("Monitor : time for building and displaying a report :", tr)
+			log.Info("Preparing report.")
 
 			// Build report and send to display
 			reportChan <- session.BuildReport(tr)
@@ -34,8 +34,7 @@ monitorLoop:
 			session.analysis = NewAnalysis()
 
 		case data := <-packetChan:
-			log.Info("Monitor pulled data.")
-
+			
 			// Handle http data type
 			if data.dataType == parameters.PacketFilter.Type {
 				// Transform data into a more convenient form

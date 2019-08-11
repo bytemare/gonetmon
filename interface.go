@@ -5,6 +5,7 @@
 package main
 
 import (
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,6 +21,10 @@ func command(syn *Sync) {
 	for sig := range sigs {
 		log.Info("Command received signal :", sig.String())
 		// This Goroutine is not waiting for a stop signal/message, so we take one off
+
+		log.SetOutput(io.MultiWriter(os.Stdout, log.Out))
+		log.Info("Logging to both file and console.")
+
 		for n := 1; n < int(syn.nbReceivers); n++ {
 			syn.syncChan <- struct{}{}
 		}

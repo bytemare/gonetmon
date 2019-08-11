@@ -87,7 +87,7 @@ const (
 
 	// General
 	defLogFile    = "./log-gonetmon.log"
-	defTimeFormat = "2006-01-02 15:04:05.124"
+	defTimeLayout = "2006-01-02 15:04:05.124"
 )
 
 // LoadParams loads the application's parameters it should run on into an object and returns it
