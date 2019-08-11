@@ -80,7 +80,7 @@ type hostStats struct {
 	responses responseStats // Statistics about responses from that hosts
 }
 
-// analysis holds the packets and the result of a recording window
+// Analysis holds the packets and the result of a recording window
 type Analysis struct {
 	packets      []*MetaPacket // A set of packets to be analysed
 	nbHosts      int
@@ -132,8 +132,8 @@ func (a *Analysis) updateResponseStats(hostname string, res *http.Response) {
 	host.responses.nbStatus[status]++
 }
 
-// NewSectionStats returns an empty set of statistics about a section
-func NewSectionStats(section string) *sectionStats {
+// newSectionStats returns an empty set of statistics about a section
+func newSectionStats(section string) *sectionStats {
 	return &sectionStats{
 		section: section,
 		nbHits:  0,
@@ -144,8 +144,8 @@ func NewSectionStats(section string) *sectionStats {
 	}
 }
 
-// NewHostStats returns an empty set of statistics about a host
-func NewHostStats(host string) *hostStats {
+// newHostStats returns an empty set of statistics about a host
+func newHostStats(host string) *hostStats {
 	return &hostStats{
 		host:     host,
 		ips:      []string{},
@@ -222,9 +222,9 @@ func (a *Analysis) updateAnalysis(p *MetaPacket) {
 		// If host not registered, create new
 		if _, ok := a.hosts[host]; ok == false {
 			// Register new host and section
-			hosts[host] = NewHostStats(host)
+			hosts[host] = newHostStats(host)
 			hosts[host].ips = append(hosts[host].ips, p.remoteIP)
-			hosts[host].sections[section] = NewSectionStats(section)
+			hosts[host].sections[section] = newSectionStats(section)
 		} else {
 
 			// Verify if remote IP was registered for this host
@@ -241,7 +241,7 @@ func (a *Analysis) updateAnalysis(p *MetaPacket) {
 			// If the section is not registered, create new
 			if _, ok := hosts[host].sections[section]; ok == false {
 				// Register new section
-				hosts[host].sections[section] = NewSectionStats(section)
+				hosts[host].sections[section] = newSectionStats(section)
 			}
 		}
 
