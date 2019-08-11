@@ -8,7 +8,6 @@ import (
 	"net"
 	"strings"
 	"sync"
-	"time"
 )
 
 // TODO : don't keep values here
@@ -18,9 +17,14 @@ var (
 	timeout           = defDisplayRefresh //10 * time.Second
 )
 
+type Devices struct {
+	devices		[]net.Interface
+	handles		[]*pcap.Handle
+}
+
 // InitialiseCapture opens device interfaces and associated handles to listen on, returns a map of these.
 // If the interfaces parameter is not nil, only open those specified.
-func InitialiseCapture(interfaces []string) (map[string]*pcap.Handle, error) {
+func InitialiseCapture(interfaces []string) (*Devices, error) {
 
 	var err error
 
@@ -30,25 +34,32 @@ func InitialiseCapture(interfaces []string) (map[string]*pcap.Handle, error) {
 		return nil, err
 	}
 
-	m := make(map[string]*pcap.Handle)
+	devs := &Devices{
+		devices: []net.Interface{},
+		handles: []*pcap.Handle{},
+	}
 	err = nil
 	for _, d := range devices {
+		// Try to open all devices for capture
 		if h, err := openDevice(d); err != nil {
-			// todo : error
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Error("Could not open device for capture.")
 		} else {
-			m[d.Name] = h
+			devs.devices = append(devs.devices, d)
+			devs.handles = append(devs.handles, h)
 		}
 	}
 
-	if len(m) == 0 {
+	if len(devs.devices) == 0 {
 		log.Error("Could not open any device interface.")
 		return nil, errors.New("could not open any device interface")
 	}
 
-	return m, nil
+	return devs, nil
 }
 
-// findDevices gathers the list of interfaces of the machine.
+// findDevices gathers the list of interfaces of the machine that have their state flage UP.
 // If the interfaces parameter is not nil, only list those specified if present.
 func findDevices(interfaces []string) []net.Interface {
 	devices, err := net.Interfaces()
@@ -65,14 +76,24 @@ func findDevices(interfaces []string) []net.Interface {
 		return nil
 	}
 
+	// Purge interfaces that don't have their state flag UP
+	for index, d := range devices {
+		if d.Flags&(net.FlagUp) == 0 {
+			// Flag is down, Interface is deactivated, purge element
+			devices[index] = devices[len(devices)-1]
+			devices = devices[:len(devices)-1]
+		}
+	}
+
 	// If we want a custom list of interfaces
 	if interfaces != nil {
 		var tailoredList []net.Interface
 
-	interfacesLoop:
+		interfacesLoop:
 		for _, i := range interfaces {
 
 			for index, d := range devices {
+
 				if d.Name == i {
 					tailoredList = append(tailoredList, d)
 
@@ -88,7 +109,7 @@ func findDevices(interfaces []string) []net.Interface {
 			}
 
 			// Here, the requested interface is not in the found set
-			log.Error("Could not find requested interface : ", i)
+			log.Error("Could not find requested interface among activated interfaces : ", i)
 		}
 
 		if len(tailoredList) == 0 {
@@ -126,30 +147,10 @@ func closeDevice(h *pcap.Handle) {
 	h.Close()
 }
 
-// Opens a list of devices
-func openDevices(devs []net.Interface) []*pcap.Handle {
-	var handlers []*pcap.Handle
-	for _, d := range devs {
-		h, err := openDevice(d)
-		if h != nil && err == nil {
-			handlers = append(handlers, h)
-		}
-	}
-	return handlers
-}
-
-// Closes listening on given interfaces through their handle
-func closeDevices(handles []*pcap.Handle) {
-	log.Info("Closing devices.")
-	for _, h := range handles {
-		closeDevice(h)
-	}
-}
-
-func closeMapDevices(devs map[string]*pcap.Handle) {
-	for d, h := range devs {
-		log.Info("Closing device on interface ", d)
-		closeDevice(h)
+func closeDevices(devices *Devices) {
+	for index, dev := range devices.devices {
+		log.Info("Closing device on interface ", dev.Name)
+		closeDevice(devices.handles[index])
 	}
 }
 
@@ -172,12 +173,36 @@ func sniffApplicationLayer(packet gopacket.Packet, filter string) bool {
 	return isApp
 }
 
+
+// getRemoteIP extracts the IP address of the remote peer from packet
+func getRemoteIP(packet gopacket.Packet, deviceIP net.IP) net.IP {
+	src, dst := packet.NetworkLayer().NetworkFlow().Endpoints()
+
+	// The deviceIP is among these two, so we return the other
+	if strings.Compare(deviceIP.String(), src.String()) == 0{
+		return net.ParseIP(dst.String())
+	}
+	return net.ParseIP(src.String())
+}
+
+
+// getDeviceIP extracts the interface's local IP address
+func getDeviceIP(device *net.Interface) (net.IP, error) {
+	add, err := device.Addrs()
+	if err != nil {
+		return nil, err
+	}
+	address := add[0].String()[:strings.IndexByte(add[0].String(), '/')]
+	return net.ParseIP(address), nil
+}
+
+
 // capturePacket continuously listens to a device interface managed by handle, and extracts relevant packets from traffic
 // to send it to packetChan
-func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, packetChan chan<- packetMsg, name string) {
+func capturePackets(device net.Interface, handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, packetChan chan<- packetMsg) {
 	defer wg.Done()
 
-	log.Info("Capturing packets on ", name)
+	log.Info("Capturing packets on ", device.Name)
 
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 
@@ -185,45 +210,50 @@ func capturePackets(handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, pac
 	for packet := range packetSource.Packets() {
 		if sniffApplicationLayer(packet, filter.Application) {
 
-			log.Debug("#### Found http packet : \n", packet.String())
-
-			netw := packet.NetworkLayer()
-			log.Debug("#### Network layer : \n", netw.LayerContents())
+			ip, err := getDeviceIP(&device)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"interface": device.Name,
+					"error":     err,
+				}).Error("Could not extract IP from local network interface")
+			}
 
 			packetChan <- packetMsg{
 				dataType:  filter.Type,
-				timestamp: time.Now(),
-				device:    name,
+				device:    device.Name,
+				deviceIP: ip,
+				remoteIP: getRemoteIP(packet, ip),
 				rawPacket: packet,
 			}
 		}
 	}
 
-	log.Info("Stopping capture on ", name)
+	log.Info("Stopping capture on ", device.Name)
 }
 
 // Collector listens on all network devices for relevant traffic and sends packets to packetChan
-func Collector(parameters *Parameters, devices map[string]*pcap.Handle, packetChan chan packetMsg, syncChan <-chan struct{}, syncwg *sync.WaitGroup) {
+func Collector(parameters *Parameters, devices *Devices, packetChan chan packetMsg, syncChan <-chan struct{}, syncwg *sync.WaitGroup) {
 
 	wg := sync.WaitGroup{}
 
-	for dev, h := range devices {
+	for index, dev := range devices.devices {
 		wg.Add(1)
+		h := devices.handles[index]
 		if err := addFilter(h, parameters.PacketFilter.Network); err != nil {
 			log.WithFields(log.Fields{
-				"interface": dev,
+				"interface": dev.Name,
 				"error":     err,
 			}).Error("Could not set filter on device. Closing.")
 			closeDevice(h)
 		}
-		go capturePackets(h, &parameters.PacketFilter, &wg, packetChan, dev)
+		go capturePackets(dev, h, &parameters.PacketFilter, &wg, packetChan)
 	}
 
 	// Wait until sync to stop
 	<-syncChan
 
 	// Inform goroutines to stop
-	closeMapDevices(devices)
+	closeDevices(devices)
 
 	// Wait for goroutines to stop
 	log.Info("Collector waiting for subs...")
