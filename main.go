@@ -30,8 +30,8 @@ func Init() (*Parameters, *Devices, error) {
 	return params, devices, nil
 }
 
-func main() {
-
+// An example use of the tool
+func Sniff() {
 	params, devices, err := Init()
 	if err != nil {
 		log.Fatal(err)
@@ -73,4 +73,8 @@ func main() {
 	log.Info("Waiting for all processes to stop.")
 	syn.wg.Wait()
 	log.Info("Monitoring successfully stopped.")
+}
+
+func main() {
+	Sniff()
 }
