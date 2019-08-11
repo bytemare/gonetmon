@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// Placeholder for current analysis and report, and Watchdog reference
+// Session is a placeholder for current analysis and report, and Watchdog reference
 type Session struct {
 	analysis *Analysis // Current ongoing analysis
 	watchdog *Watchdog // Surveil traffic behaviour and raise alert if need
