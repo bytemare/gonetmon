@@ -11,6 +11,7 @@ import (
 	"sync"
 )
 
+// Devices is a couple of arrays to hold corresponding devices with their handles
 type Devices struct {
 	devices []net.Interface
 	handles []*pcap.Handle
