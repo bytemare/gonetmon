@@ -46,19 +46,21 @@ monitorLoop:
 			// Handle http data type
 			if data.dataType == dataHTTP {
 				// Transform data into a more convenient form
-				packet, err := DataToHTTP(data)
+				packet, err := DataToHTTP(&data)
 				if err != nil {
 					log.WithFields(log.Fields{
 						"interface": data.device,
-						"capture timestamp": data.timestamp,
+						"capture timestamp": data.rawPacket.Metadata().Timestamp,
 						"payload": strings.Replace(string(data.rawPacket.ApplicationLayer().Payload()), "\n", "{newline}", -1), // Flatten to a single line to avoid breaking log file
 					}).Error("Could not interpret package as http.")
 					continue
 				}
+
+				// Add packet to analysis
 				session.report.AddPacket(packet)
 
 				// Update Watchdog
-				session.watchdog.AddHit(data.timestamp)
+				session.watchdog.AddHit(packet.packet.Metadata().Timestamp)
 			}
 		}
 
