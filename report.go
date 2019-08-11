@@ -110,7 +110,7 @@ func (a *Analysis) updateSectionStats(hostname string, sectionName string, req *
 	method := req.Method
 
 	// If method was not yet registered, do it
-	if _, ok := section.requests.nbMethods[method]; ok == false {
+	if _, ok := section.requests.nbMethods[method]; !ok {
 		section.requests.nbMethods[method] = 0
 	}
 	section.requests.nbMethods[method]++
@@ -126,7 +126,7 @@ func (a *Analysis) updateResponseStats(hostname string, res *http.Response) {
 
 	status := res.StatusCode
 	// If status code has not yet been encountered, add it
-	if _, ok := host.responses.nbStatus[status]; ok == false {
+	if _, ok := host.responses.nbStatus[status]; !ok {
 		host.responses.nbStatus[status] = 0
 	}
 	host.responses.nbStatus[status]++
@@ -198,6 +198,30 @@ func getSection(req *http.Request) string {
 	return uri
 }
 
+// registerHostElements adds new remote IP and section to a host if they were not present
+func (a *Analysis) registerHostElements(host string, section string, remoteIP string) {
+
+	hosts := a.hosts
+
+	// Verify if remote IP was registered for this host
+	b := false
+	for _, ip := range hosts[host].ips {
+		if strings.Compare(ip, remoteIP) == 0 {
+			b = true
+		}
+	}
+	if !b {
+		hosts[host].ips = append(hosts[host].ips, remoteIP)
+	}
+
+	// If the section is not registered, create new
+	if _, ok := hosts[host].sections[section]; !ok {
+		// Register new section
+		hosts[host].sections[section] = newSectionStats(section)
+	}
+}
+
+
 // updateAnalysis update's the report's current analysis with the new incoming packet information
 func (a *Analysis) updateAnalysis(p *MetaPacket) {
 
@@ -220,29 +244,13 @@ func (a *Analysis) updateAnalysis(p *MetaPacket) {
 		hosts := a.hosts
 
 		// If host not registered, create new
-		if _, ok := a.hosts[host]; ok == false {
+		if _, ok := a.hosts[host]; !ok {
 			// Register new host and section
 			hosts[host] = newHostStats(host)
 			hosts[host].ips = append(hosts[host].ips, p.remoteIP)
 			hosts[host].sections[section] = newSectionStats(section)
 		} else {
-
-			// Verify if remote IP was registered for this host
-			b := false
-			for _, ip := range hosts[host].ips {
-				if strings.Compare(ip, p.remoteIP) == 0 {
-					b = true
-				}
-			}
-			if b == false {
-				hosts[host].ips = append(hosts[host].ips, p.remoteIP)
-			}
-
-			// If the section is not registered, create new
-			if _, ok := hosts[host].sections[section]; ok == false {
-				// Register new section
-				hosts[host].sections[section] = newSectionStats(section)
-			}
+			a.registerHostElements(host, section, p.remoteIP)
 		}
 
 		// Update statistics
