@@ -25,9 +25,9 @@ type Filter struct {
 
 // Sync is a placeholder for synchronisation tools across goroutines
 type Sync struct {
-	wg			sync.WaitGroup
-	syncChan	chan struct{}
-	nbReceivers	int
+	wg          sync.WaitGroup
+	syncChan    chan struct{}
+	nbReceivers int
 }
 
 // addRoutine increments the number of goroutines to be synced and waiting for a message on the channel

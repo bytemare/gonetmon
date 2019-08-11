@@ -137,7 +137,7 @@ func NewWatchdog(parameters *Parameters, c chan<- alertMsg, syn *Sync) *Watchdog
 		threshold: parameters.AlertThreshold,
 		alertChan: c,
 		alert:     false,
-		syn:	syn,
+		syn:       syn,
 	}
 
 	ticker := time.NewTicker(dog.tick)

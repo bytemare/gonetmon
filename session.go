@@ -24,7 +24,7 @@ func NewSession(parameters *Parameters, alertChan chan<- alertMsg, syn *Sync) *S
 }
 
 // BuildReport calls for a final analysis and collects the resulting report
-func (s*Session) BuildReport() *Report {
+func (s *Session) BuildReport() *Report {
 	return NewReport(s.analysis)
 }
 
