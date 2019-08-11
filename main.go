@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-// Initialises Sniffing and Monitoring
+// Init initialises Sniffing and Monitoring
 // TODO: Load configuration from file or command line to initialise parameters
 func Init() (*Parameters, *Devices, error) {
 
@@ -30,7 +30,7 @@ func Init() (*Parameters, *Devices, error) {
 	return params, devices, nil
 }
 
-// An example use of the tool
+// Sniff is an example use of the tool
 func Sniff() {
 	params, devices, err := Init()
 	if err != nil {
