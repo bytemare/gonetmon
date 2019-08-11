@@ -6,16 +6,11 @@ import (
 )
 
 type packetMsg struct {
-	dataType  string // Kind of data, for now just http packet
-	device    string // Interface on which the traffic was recorded
-	deviceIP  string // IP address of local network device interface
-	remoteIP  string // IP address or remote peer
+	dataType  string          // Kind of data, for now just http packet
+	device    string          // Interface on which the traffic was recorded
+	deviceIP  string          // IP address of local network device interface
+	remoteIP  string          // IP address or remote peer
 	rawPacket gopacket.Packet // Actual packet payload
-}
-
-type reportMsg struct {
-	report    *Report // Message body to display
-	timestamp time.Time
 }
 
 type alertMsg struct {
