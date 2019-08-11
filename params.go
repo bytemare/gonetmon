@@ -11,12 +11,14 @@ const (
 	dataHTTP = "http"
 )
 
+// CaptureConfig holds configuration for capturing packets
 type CaptureConfig struct {
 	SnapshotLen     int32         // Maximum size to read for each packet
 	PromiscuousMode bool          // Whether to ut the interface in promiscuous mode
 	CaptureTimeout  time.Duration // Period to listen for traffic before sending out captured traffic
 }
 
+// Filter holds different filters on different levels to apply and tag data
 type Filter struct {
 	Network     string // BPF filter to filter traffic at data layer
 	Application string // String to look for in Application Layer
