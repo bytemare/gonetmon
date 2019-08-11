@@ -53,4 +53,4 @@ script:
 
 after_success:
   - sonar-scanner
-  - sudo ./gonetmon
+  #- sudo ./gonetmon
