@@ -46,6 +46,7 @@ notifications:
     #    - ./gonetmon
 
 install:
+  - go mod init
   - go get -d -v ./...
 
 script:
