@@ -5,6 +5,7 @@ import (
 	"github.com/google/gopacket"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 )
@@ -33,6 +34,19 @@ type MetaPacket struct {
 	packet gopacket.Packet
 }
 
+// NewMetaPacket returns a new struct initialised with values from the packetMsg
+func NewMetaPacket(data *packetMsg) *MetaPacket {
+	return &MetaPacket{
+		messageType: "",
+		device:      data.device,
+		deviceIP:    data.deviceIP,
+		remoteIP:    data.remoteIP,
+		request:     nil,
+		response:    nil,
+		packet:      data.rawPacket,
+	}
+}
+
 type requestStats struct {
 	nbReqs    uint            // Sum of all the elements
 	nbMethods map[string]uint // Map request methods to the number of times they were encountered
@@ -44,21 +58,30 @@ type responseStats struct {
 }
 
 type sectionStats struct {
-	section  string
-	nbHits   int
-	requests requestStats
+	section  string       // Section of a website
+	nbHits   int          // Number of requests that were made for that section
+	requests requestStats // Associated statistics
 }
 
+// SortedSections implements sort.Interface based on the hit field
+type SortedSections []*sectionStats
+
+func (s SortedSections) Len() int           { return len(s) }
+func (s SortedSections) Less(i, j int) bool { return s[i].nbHits < s[j].nbHits }
+func (s SortedSections) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
+// hostStats holds information about traffic with a host
 type hostStats struct {
-	host     string
-	ips      []string
-	sections map[string]*sectionStats
+	host     string                   // Domain name
+	ips      []string                 // IP addresses that were encountered for that host (sort of a local DNS cache)
+	hits     int                      // Number of successfully recognised packets associated with that host
+	sections map[string]*sectionStats // Statistics about requested sections of that host
 	// Statistics about responses on that host
-	responses responseStats
+	responses responseStats // Statistics about responses from that hosts
 }
 
 // analysis holds the packets and the result of a recording window
-type analysis struct {
+type Analysis struct {
 	packets      []*MetaPacket // A set of packets to be analysed
 	nbHosts      int
 	hosts        map[string]*hostStats
@@ -67,16 +90,16 @@ type analysis struct {
 
 // Report holds the final result of an analysis, to be sent out to display()
 type Report struct {
-	topDomain string
-	responses responseStats
-	sections  sectionStats
-	analysis  analysis
+	topHost        hostStats
+	sortedSections []*sectionStats
+	timestamp      time.Time
 }
 
 // Update statistics of a section with new data
-func (a *analysis) updateSectionStats(hostname string, sectionName string, req *http.Request) {
+func (a *Analysis) updateSectionStats(hostname string, sectionName string, req *http.Request) {
 
 	host := a.hosts[hostname]
+	host.hits++
 	a.lastSeenHost = host
 	section := host.sections[sectionName]
 
@@ -94,10 +117,10 @@ func (a *analysis) updateSectionStats(hostname string, sectionName string, req *
 }
 
 // updateResponseStats updates data for hostname with relevant data
-func (a *analysis) updateResponseStats(hostname string, res *http.Response) {
+func (a *Analysis) updateResponseStats(hostname string, res *http.Response) {
 
 	host := a.hosts[hostname]
-
+	host.hits++
 	a.lastSeenHost = host
 	host.responses.nbResp++
 
@@ -121,10 +144,12 @@ func NewSectionStats(section string) *sectionStats {
 	}
 }
 
+// NewHostStats returns an empty set of statistics about a host
 func NewHostStats(host string) *hostStats {
 	return &hostStats{
 		host:     host,
 		ips:      []string{},
+		hits:     0,
 		sections: make(map[string]*sectionStats),
 		responses: responseStats{
 			nbResp:   0,
@@ -133,7 +158,11 @@ func NewHostStats(host string) *hostStats {
 	}
 }
 
-func getHost(p *MetaPacket, a *analysis) (string, error) {
+// getHost returns the domain name from a http request, and attempts to do so for a http response.
+// There's no standard trace of the remote host in the Response header,
+// so the only way that's left is to see if we can match the remote address with a host's address we've already seen
+// before with a request
+func getHost(p *MetaPacket, a *Analysis) (string, error) {
 
 	// If it's a request, it's in the header
 	if p.messageType == httpRequest {
@@ -156,23 +185,21 @@ func getHost(p *MetaPacket, a *analysis) (string, error) {
 		}
 	}
 
-	return "nil", errors.New("error : http response remote IP matches to no known host")
+	// If no previous host was found, we don't yet have a way to reliably return a host
+	return "nil", errors.New("error : http response remote IP matches no known host")
 }
 
-func getSection(p *MetaPacket) (string, error) {
-	if p.messageType == httpRequest {
-		uri := p.request.RequestURI
-		if idx := strings.IndexByte(uri[1:], '/'); idx >= 0 {
-			uri = uri[:idx+1]
-		}
-		return uri, nil
+// getSection extracts the section from a HTTP Request's URI
+func getSection(req *http.Request) string {
+	uri := req.RequestURI
+	if idx := strings.IndexByte(uri[1:], '/'); idx >= 0 {
+		uri = uri[:idx+1]
 	}
-
-	return "", errors.New("could not extract section from packet")
+	return uri
 }
 
 // updateAnalysis update's the report's current analysis with the new incoming packet information
-func (a *analysis) updateAnalysis(p *MetaPacket) {
+func (a *Analysis) updateAnalysis(p *MetaPacket) {
 
 	// If it is a response, we must have seen the corresponding host before, or we cannot work with it
 	if p.messageType == httpResponse {
@@ -188,7 +215,7 @@ func (a *analysis) updateAnalysis(p *MetaPacket) {
 
 		// Here, it is a request
 		host, _ := getHost(p, a)
-		section, _ := getSection(p)
+		section := getSection(p.request)
 
 		hosts := a.hosts
 
@@ -224,35 +251,15 @@ func (a *analysis) updateAnalysis(p *MetaPacket) {
 }
 
 // AddPacket adds a packet to the report
-func (a *analysis) AddPacket(p *MetaPacket) {
+func (a *Analysis) AddPacket(p *MetaPacket) {
 	a.packets = append(a.packets, p)
 
 	a.updateAnalysis(p)
 }
 
-func (a *analysis) build() {
-	// TODO : finish analysis of the report and build the final thing
-
-	/*
-		1. for each domain, count the number of total hits
-		2. for the domain with most hits, sort sections per hits
-		3. build report
-	*/
-}
-
-func buildReportMsg(r *analysis) reportMsg {
-	// TODO : build a report message from the report
-	msg := reportMsg{
-		report:    r,
-		timestamp: time.Now(),
-	}
-
-	return msg
-}
-
 // NewAnalysis returns a new and empty Analysis struct
-func NewAnalysis() *analysis {
-	return &analysis{
+func NewAnalysis() *Analysis {
+	return &Analysis{
 		packets:      nil,
 		nbHosts:      0,
 		hosts:        make(map[string]*hostStats),
@@ -260,11 +267,52 @@ func NewAnalysis() *analysis {
 	}
 }
 
-func NewReport() *Report {
+// NewReport build a new report, containing the host with the most hits
+func NewReport(a *Analysis) *Report {
+
+	// If no hosts were registered, we have nothing to report
+	if len(a.hosts) == 0 {
+		log.Info("No hosts in analysis to build report on.")
+		return &Report{
+			topHost:        nil,
+			sortedSections: nil,
+			timestamp:      time.Time{},
+		}
+	}
+
+	// Loop through all encountered hosts and find the first one with most hits
+	var topHost *hostStats
+	topHits := 0
+	for _, stats := range a.hosts {
+		if stats.hits > topHits {
+			topHits = stats.hits
+			topHost = stats
+		}
+	}
+
+	// This should not happen, as we avoid the case above, but for the sake of it
+	if topHost == nil {
+		log.Error("Could not find a topHost on a non-empty set of Hosts. THIS SHOULD NOT HAPPEN.")
+		return &Report{
+			topHost:   nil,
+			timestamp: time.Time{},
+		}
+	}
+
+	// Copy sections of host into a slice
+	sortedSections := make([]*sectionStats, len(topHost.sections))
+	i := 0
+	for _, stats := range topHost.sections {
+		sortedSections[i] = stats
+		i++
+	}
+	sort.Sort(SortedSections(sortedSections))
+
+	log.Info("sections ", sortedSections)
+
 	return &Report{
-		topDomain: "",
-		responses: nil,
-		sections:  nil,
-		analysis:  nil,
+		topHost:        *topHost,
+		sortedSections: sortedSections,
+		timestamp:      time.Now(),
 	}
 }
