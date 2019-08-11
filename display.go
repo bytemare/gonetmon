@@ -11,6 +11,7 @@ func outputReport(r *Report, output string) {
 
 // Display loops on receiving channels to print alerts and reports
 func Display(parameters *Parameters, reportChan <-chan *Report, alertChan <-chan alertMsg, syn *Sync) {
+	defer syn.wg.Done()
 
 displayLoop:
 	for {
@@ -34,5 +35,4 @@ displayLoop:
 	}
 
 	log.Info("Display terminating.")
-	syn.wg.Done()
 }

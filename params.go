@@ -27,7 +27,7 @@ type Filter struct {
 type Sync struct {
 	wg          sync.WaitGroup
 	syncChan    chan struct{}
-	nbReceivers int
+	nbReceivers uint
 }
 
 // addRoutine increments the number of goroutines to be synced and waiting for a message on the channel
@@ -45,7 +45,7 @@ type Parameters struct {
 	Interfaces    []string // Array of interfaces to specifically listen on. If nil, listen on all devices.
 
 	// Display related parameters
-	DisplayRefresh time.Duration // Period (seconds) to renew display print, thus corresponding to time of analysis
+	DisplayRefresh time.Duration // Period (seconds) to renew display print, thus also used for capture and reporting
 	DisplayType    string        // Type of display output
 
 	// Analysis related parameters
@@ -66,7 +66,7 @@ const (
 	defCaptureTimeout          = defDisplayRefresh
 
 	// Display Parameters
-	defDisplayRefresh = 2 * time.Second
+	defDisplayRefresh = 5 * time.Second
 	defDisplayType    = "console" // Default output destination
 
 	// Format strings for display

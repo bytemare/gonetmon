@@ -231,6 +231,7 @@ func capturePackets(device net.Interface, handle *pcap.Handle, filter *Filter, w
 
 // Collector listens on all network devices for relevant traffic and sends packets to packetChan
 func Collector(parameters *Parameters, devices *Devices, packetChan chan packetMsg, syn *Sync) {
+	defer syn.wg.Done()
 
 	collWG := sync.WaitGroup{}
 
@@ -257,5 +258,4 @@ func Collector(parameters *Parameters, devices *Devices, packetChan chan packetM
 	log.Info("Collector waiting for subs...")
 	collWG.Wait()
 	log.Info("Collector terminating")
-	syn.wg.Done()
 }

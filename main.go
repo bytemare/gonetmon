@@ -43,6 +43,7 @@ func Sniff() {
 		syncChan:    make(chan struct{}),
 		nbReceivers: 0,
 	}
+	syn.addRoutine() // add this main process
 
 	//var nbReceivers = 1
 	//var wg sync.WaitGroup
@@ -69,6 +70,7 @@ func Sniff() {
 	log.Info("Capturing set up.")
 
 	// Shutdown
+	syn.wg.Done()
 	<-syn.syncChan
 	log.Info("Waiting for all processes to stop.")
 	syn.wg.Wait()

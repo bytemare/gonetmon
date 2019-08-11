@@ -123,8 +123,6 @@ func (w *Watchdog) evict(now time.Time) {
 // NewWatchdog returns a watchdog struct and launches a goroutine that will observe its cache to detect alert triggering
 func NewWatchdog(parameters *Parameters, c chan<- alertMsg, syn *Sync) *Watchdog {
 
-	syn.addRoutine()
-
 	dog := Watchdog{
 		cache: hitCache{
 			push:    make(chan time.Time, parameters.WatchdogBufSize),
@@ -140,16 +138,18 @@ func NewWatchdog(parameters *Parameters, c chan<- alertMsg, syn *Sync) *Watchdog
 		syn:       syn,
 	}
 
-	ticker := time.NewTicker(dog.tick)
-
 	// Routine that continuously verifies the cache and will inform about alert status
+	syn.addRoutine()
 	go func() {
+		defer syn.wg.Done()
+		ticker := time.NewTicker(dog.tick)
 	watchdogLoop:
 		for {
 			select {
 
 			// Synchronisation/Exit trigger
 			case <-syn.syncChan:
+				ticker.Stop()
 				log.Info("Watchdog terminating.")
 				break watchdogLoop
 
@@ -165,7 +165,6 @@ func NewWatchdog(parameters *Parameters, c chan<- alertMsg, syn *Sync) *Watchdog
 				dog.verify()
 			}
 		}
-		syn.wg.Done()
 	}()
 
 	return &dog

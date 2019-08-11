@@ -8,12 +8,13 @@ import (
 
 // Monitor is a goroutine that listen on the dataChan channel to pull data packets for analysis
 func Monitor(parameters *Parameters, packetChan <-chan packetMsg, reportChan chan<- *Report, alertChan chan<- alertMsg, syn *Sync) {
+	defer syn.wg.Done()
 
 	// Start a new monitoring session
 	session := NewSession(parameters, alertChan, syn)
 
 	// Set up ticker to regularly send reports to display
-	tickerReport := time.NewTicker(time.Second * parameters.DisplayRefresh)
+	tickerReport := time.NewTicker(parameters.DisplayRefresh)
 
 monitorLoop:
 	for {
@@ -27,7 +28,10 @@ monitorLoop:
 			log.Info("Monitor : time for building and displaying a report :", tr)
 
 			// Build report and send to display
-			reportChan <- session.BuildReport()
+			reportChan <- session.BuildReport(tr)
+
+			// Flush session analysis
+			session.analysis = NewAnalysis()
 
 		case data := <-packetChan:
 			log.Info("Monitor pulled data.")
@@ -55,6 +59,6 @@ monitorLoop:
 
 	}
 
+	tickerReport.Stop()
 	log.Info("Monitor terminating")
-	syn.wg.Done()
 }

@@ -13,18 +13,19 @@ import (
 
 // command handles CLI interactions
 func command(syn *Sync) {
+	defer syn.wg.Done()
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	for sig := range sigs {
-		log.Info("command received signal :", sig.String())
-		for n := 1; n < syn.nbReceivers; n++ {
+		log.Info("Command received signal :", sig.String())
+		// This Goroutine is not waiting for a stop signal/message, so we take one off
+		for n := 1; n < int(syn.nbReceivers); n++ {
 			syn.syncChan <- struct{}{}
 		}
 		break
 	}
 
-	log.Info("command terminating.")
-	syn.wg.Done()
+	log.Info("Command terminating.")
 }

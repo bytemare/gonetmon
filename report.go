@@ -90,7 +90,7 @@ type Analysis struct {
 
 // Report holds the final result of an analysis, to be sent out to display()
 type Report struct {
-	topHost        hostStats
+	topHost        *hostStats
 	sortedSections []*sectionStats
 	timestamp      time.Time
 }
@@ -268,7 +268,7 @@ func NewAnalysis() *Analysis {
 }
 
 // NewReport build a new report, containing the host with the most hits
-func NewReport(a *Analysis) *Report {
+func NewReport(a *Analysis, t time.Time) *Report {
 
 	// If no hosts were registered, we have nothing to report
 	if len(a.hosts) == 0 {
@@ -276,7 +276,7 @@ func NewReport(a *Analysis) *Report {
 		return &Report{
 			topHost:        nil,
 			sortedSections: nil,
-			timestamp:      time.Time{},
+			timestamp:      t,
 		}
 	}
 
@@ -294,8 +294,9 @@ func NewReport(a *Analysis) *Report {
 	if topHost == nil {
 		log.Error("Could not find a topHost on a non-empty set of Hosts. THIS SHOULD NOT HAPPEN.")
 		return &Report{
-			topHost:   nil,
-			timestamp: time.Time{},
+			topHost:        nil,
+			sortedSections: nil,
+			timestamp:      t,
 		}
 	}
 
@@ -311,8 +312,8 @@ func NewReport(a *Analysis) *Report {
 	log.Info("sections ", sortedSections)
 
 	return &Report{
-		topHost:        *topHost,
+		topHost:        topHost,
 		sortedSections: sortedSections,
-		timestamp:      time.Now(),
+		timestamp:      t,
 	}
 }
