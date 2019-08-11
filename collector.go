@@ -175,25 +175,25 @@ func sniffApplicationLayer(packet gopacket.Packet, filter string) bool {
 
 
 // getRemoteIP extracts the IP address of the remote peer from packet
-func getRemoteIP(packet gopacket.Packet, deviceIP net.IP) net.IP {
+func getRemoteIP(packet gopacket.Packet, deviceIP string) string {
 	src, dst := packet.NetworkLayer().NetworkFlow().Endpoints()
 
 	// The deviceIP is among these two, so we return the other
-	if strings.Compare(deviceIP.String(), src.String()) == 0{
-		return net.ParseIP(dst.String())
+	if strings.Compare(deviceIP, src.String()) == 0{
+		return dst.String()
 	}
-	return net.ParseIP(src.String())
+	return src.String()
 }
 
 
 // getDeviceIP extracts the interface's local IP address
-func getDeviceIP(device *net.Interface) (net.IP, error) {
+func getDeviceIP(device *net.Interface) (string, error) {
 	add, err := device.Addrs()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	address := add[0].String()[:strings.IndexByte(add[0].String(), '/')]
-	return net.ParseIP(address), nil
+	return address, nil
 }
 
 
