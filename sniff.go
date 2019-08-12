@@ -1,4 +1,5 @@
-package gonetmon
+// Sniff holds examples of initialising a session and manage different routines to perform monitoring
+package main
 
 import (
 	"errors"
@@ -6,7 +7,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"os"
 	"sync"
-	"time"
 )
 
 var log = logrus.New()
@@ -42,11 +42,16 @@ func Init() (*Parameters, *Devices, error) {
 }
 
 // Sniff is an example use of the tool
-func Sniff(testWait *sync.WaitGroup) {
-	defer testWait.Done()
+func Sniff(testWait *sync.WaitGroup) error {
+	if testWait != nil {
+		defer testWait.Done()
+	}
+
+	// Initialise, and fail if conditions are not met
 	params, devices, err := Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return err
 	}
 
 	// IPCs
@@ -57,8 +62,6 @@ func Sniff(testWait *sync.WaitGroup) {
 	}
 	syn.addRoutine() // add this main process
 
-	//var nbReceivers = 1
-	//var wg sync.WaitGroup
 	packetChan := make(chan packetMsg, 1000)
 	reportChan := make(chan *Report, 1)
 	alertChan := make(chan alertMsg, 1)
@@ -75,32 +78,17 @@ func Sniff(testWait *sync.WaitGroup) {
 	syn.addRoutine()
 	go Display(params, reportChan, alertChan, syn)
 
-	// Run command
+	// Run CLI
 	syn.addRoutine()
-	go command(syn)
+	go CLI(syn)
 
 	log.Info("Capturing set up.")
 
-	// Shutdown
+	// Sync and shutdown
 	syn.wg.Done()
 	<-syn.syncChan
 	log.Info("Waiting for all processes to stop.")
 	syn.wg.Wait()
 	log.Info("Monitoring successfully stopped.")
-}
-
-// SnifferTest is a test function for Sniffer use with a timeout
-func SnifferTest(duration time.Duration) {
-
-	testWait := sync.WaitGroup{}
-	testWait.Add(1)
-	go Sniff(&testWait)
-
-	// Send interrupt signal after timeout
-	p, _ := os.FindProcess(os.Getpid())
-	select {
-	case <-time.After(duration):
-		_ = p.Signal(os.Interrupt)
-	}
-	testWait.Wait()
+	return nil
 }
