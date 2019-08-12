@@ -55,6 +55,7 @@ install:
 
 script:
   - go build -v ./...
+  - go run Tests/RealTraffic/RealTraffic.go > /dev/null & sudo ./gonetmon
 
 after_success:
   - sonar-scanner
