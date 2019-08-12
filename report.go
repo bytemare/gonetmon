@@ -67,7 +67,7 @@ type sectionStats struct {
 type SortedSections []*sectionStats
 
 func (s SortedSections) Len() int           { return len(s) }
-func (s SortedSections) Less(i, j int) bool { return s[i].nbHits < s[j].nbHits }
+func (s SortedSections) Less(i, j int) bool { return s[i].nbHits > s[j].nbHits }
 func (s SortedSections) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 // hostStats holds information about traffic with a host
@@ -85,7 +85,7 @@ type Analysis struct {
 	packets      []*MetaPacket // A set of packets to be analysed
 	nbHosts      int
 	hosts        map[string]*hostStats
-	lastSeenHost *hostStats
+	//lastSeenHost *hostStats
 }
 
 // Report holds the final result of an analysis, to be sent out to display()
@@ -100,7 +100,7 @@ func (a *Analysis) updateSectionStats(hostname string, sectionName string, req *
 
 	host := a.hosts[hostname]
 	host.hits++
-	a.lastSeenHost = host
+	//a.lastSeenHost = host
 	section := host.sections[sectionName]
 
 	// Update Hits
@@ -121,7 +121,7 @@ func (a *Analysis) updateResponseStats(hostname string, res *http.Response) {
 
 	host := a.hosts[hostname]
 	host.hits++
-	a.lastSeenHost = host
+	//a.lastSeenHost = host
 	host.responses.nbResp++
 
 	status := res.StatusCode
@@ -170,11 +170,11 @@ func getHost(p *MetaPacket, a *Analysis) (string, error) {
 	}
 
 	// Verify if the ip corresponds to the last encountered host
-	for _, ip := range a.lastSeenHost.ips {
+	/*for _, ip := range a.lastSeenHost.ips {
 		if strings.Compare(ip, p.remoteIP) == 0 {
 			return a.lastSeenHost.host, nil
 		}
-	}
+	}*/
 
 	// Iterate over all encountered hosts
 	for host, stat := range a.hosts {
@@ -193,6 +193,10 @@ func getHost(p *MetaPacket, a *Analysis) (string, error) {
 func getSection(req *http.Request) string {
 	uri := req.RequestURI
 	if idx := strings.IndexByte(uri[1:], '/'); idx >= 0 {
+		uri = uri[:idx+1]
+	}
+	// Sometimes requests will hold values, skip them
+	if idx := strings.IndexByte(uri[1:], '?'); idx >= 0 {
 		uri = uri[:idx+1]
 	}
 	return uri
@@ -270,7 +274,7 @@ func NewAnalysis() *Analysis {
 		packets:      nil,
 		nbHosts:      0,
 		hosts:        make(map[string]*hostStats),
-		lastSeenHost: nil,
+		//lastSeenHost: nil,
 	}
 }
 
