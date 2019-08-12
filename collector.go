@@ -98,19 +98,31 @@ func findDevices(requestedInterfaces []string) []net.Interface {
 		return nil
 	}
 
-	if len(devices) == 0 {
+	if devices == nil || len(devices) == 0 {
 		log.Error("Could not find any network devices (but no error occurred).")
 		return nil
 	}
 
 	// Purge interfaces that don't have their state flag UP
+	/*var cpy = []net.Interface{}
+	copy(cpy, devices)
+	fmt.Printf("len is %d\n%s", len(devices), devices)
 	for index, d := range devices {
 		if d.Flags&(net.FlagUp) == 0 {
+			fmt.Printf("len is %d\n", len(devices))
 			// Flag is down, Interface is deactivated, purge element
-			devices[index] = devices[len(devices)-1]
+			if cpy != nil {
+				var last = cpy[len(cpy)-1]
+				cpy[index] = last
+				cpy = cpy[:len(cpy)-1]
+			}
+
+			/*last := devices[len(devices)-1]
+			devices[index] = last
 			devices = devices[:len(devices)-1]
 		}
 	}
+*/
 
 	// If we want a custom list of interfaces
 	if requestedInterfaces != nil {

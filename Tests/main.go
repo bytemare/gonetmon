@@ -1,6 +1,7 @@
-package gonetmon
+package main
 
 import "time"
+import . "github.com/bytemare/gonetmon"
 
 func main() {
 
