@@ -10,10 +10,9 @@ import (
 
 const (
 	//burst		= 20* time.Second
-	duration	= 1 * time.Minute
+	duration = 1 * time.Minute
 	//duration	= 5 * time.Second
 )
-
 
 func crawler(url string, syn <-chan struct{}) {
 
@@ -45,7 +44,6 @@ func crawler(url string, syn <-chan struct{}) {
 	<-syn
 }
 
-
 func main() {
 
 	url := "http://bbc.com/"
@@ -54,27 +52,27 @@ func main() {
 
 	go crawler(url, syn)
 
-	loop:
+loop:
 	for {
 		select {
 
 		/*
-		case <-time.After(burst):
-			if nbburst > 0 {
-				nbburst -= 1
-				syn <- struct{}{}
-				//fmt.Println("Pause...")
-				time.Sleep(burst)
-				go crawler(url, syn)
-			} else {
-				break loop
-			}
+			case <-time.After(burst):
+				if nbburst > 0 {
+					nbburst -= 1
+					syn <- struct{}{}
+					//fmt.Println("Pause...")
+					time.Sleep(burst)
+					go crawler(url, syn)
+				} else {
+					break loop
+				}
 
-		 */
+		*/
 
 		case <-time.After(duration):
 			break loop
 		}
 	}
-	syn<- struct{}{}
+	syn <- struct{}{}
 }
