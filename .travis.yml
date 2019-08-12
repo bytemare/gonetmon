@@ -2,7 +2,7 @@ language: go
 
 go:
   - 1.11.12
-  - 1.12
+  #- 1.12
 
 env:
   - GO111MODULE=on
@@ -30,17 +30,6 @@ git:
 
 notifications:
   email: false
-
-
-#matrix:
-#  include:
-#    - name: "Linux"
-#      os: linux
-#      dist: trusty
-#      after_script:
-#        - sonar-scanner
-#    - name: "MacOS"
-#      os: osx
 
     #- name: "Windows"
     #  os: windows
