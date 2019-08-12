@@ -1,0 +1,111 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"path": "bufio",
+			"revision": ""
+		},
+		{
+			"path": "bytes",
+			"revision": ""
+		},
+		{
+			"path": "context",
+			"revision": ""
+		},
+		{
+			"path": "encoding/hex",
+			"revision": ""
+		},
+		{
+			"path": "encoding/json",
+			"revision": ""
+		},
+		{
+			"path": "errors",
+			"revision": ""
+		},
+		{
+			"path": "fmt",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "DTZ5GZB6CbiZyOv1/cDVNVtfMh4=",
+			"path": "github.com/google/gopacket",
+			"revision": "6d3e2615da4ed2ed2a349918fe74e7e6d03482fa",
+			"revisionTime": "2019-05-09T17:39:10Z",
+			"version": "v1",
+			"versionExact": "v1.1.17"
+		},
+		{
+			"checksumSHA1": "C4GxBAMKg/+Utfx3GD3dRa0kZhY=",
+			"path": "github.com/sirupsen/logrus",
+			"revision": "839c75faf7f98a33d445d181f3018b5c3409a45e",
+			"revisionTime": "2019-05-18T10:38:48Z",
+			"version": "v1",
+			"versionExact": "v1.4.2"
+		},
+		{
+			"path": "io",
+			"revision": ""
+		},
+		{
+			"path": "log",
+			"revision": ""
+		},
+		{
+			"path": "math",
+			"revision": ""
+		},
+		{
+			"path": "net",
+			"revision": ""
+		},
+		{
+			"path": "os",
+			"revision": ""
+		},
+		{
+			"path": "reflect",
+			"revision": ""
+		},
+		{
+			"path": "runtime",
+			"revision": ""
+		},
+		{
+			"path": "runtime/debug",
+			"revision": ""
+		},
+		{
+			"path": "sort",
+			"revision": ""
+		},
+		{
+			"path": "strconv",
+			"revision": ""
+		},
+		{
+			"path": "strings",
+			"revision": ""
+		},
+		{
+			"path": "sync",
+			"revision": ""
+		},
+		{
+			"path": "sync/atomic",
+			"revision": ""
+		},
+		{
+			"path": "syscall",
+			"revision": ""
+		},
+		{
+			"path": "time",
+			"revision": ""
+		}
+	],
+	"rootPath": "github.com/bytemare/gonetmon"
+}
