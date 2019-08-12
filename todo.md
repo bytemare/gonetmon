@@ -10,7 +10,13 @@
   -   [x] Most hits on website sections
 -   [x] Alert when traffic over past n minutes hits a threshold
   -   [x] Inform when recovered
--   [ ] Tests
+-   [ ] Summary statistics
+  -   [x] Total number of hits per host
+  -   [x] Response statistics per host
+  -   [x] Request methods per section
+  -   [ ] Traffic speed
+
+-   [x] Tests
 
 ### Remain
 
@@ -23,12 +29,11 @@
 
 -   [ ] Tests :
   -   Platforms
-    -   [ ] Linux
-    -   [ ] Macos
+    -   [x] Linux
+    -   [x] Macos
     -   [ ] maybe Windows ?
   -   With real world traffic
-    -   [ ] Simulate with user behaviour ?
-    -   [ ] Automated crawler ?
+    -   [x] Automated crawler
   -   Ad-hoc tests
     -   [ ] Tailor specific requests to trigger hit detection and alerts
 
