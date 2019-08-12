@@ -44,7 +44,7 @@ install:
 
 script:
   - go build
-  - sudo -E env "PATH=$PATH" go test -cover ./...
+  - cd Tests && sudo -E env "PATH=$PATH" go test -cover -coverprofile=c.out ./...
   #- go run Tests/RealTraffic/RealTraffic.go > /dev/null & sudo ./gonetmon
 
 after_success:
