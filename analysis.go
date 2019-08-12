@@ -82,9 +82,10 @@ type hostStats struct {
 
 // Analysis holds the packets and the result of a recording window
 type Analysis struct {
-	packets      []*MetaPacket // A set of packets to be analysed
-	nbHosts      int
-	hosts        map[string]*hostStats
+	packets []*MetaPacket      // A set of packets to be analysed
+	traffic map[string]int64 // maps device name and corresponding amount of bits
+	nbHosts int
+	hosts   map[string]*hostStats
 	//lastSeenHost *hostStats
 }
 
@@ -92,7 +93,8 @@ type Analysis struct {
 type Report struct {
 	topHost        *hostStats
 	sortedSections []*sectionStats
-	timestamp      time.Time
+	traffic 		map[string]int64
+	timestamp 		time.Time
 }
 
 // Update statistics of a section with new data
@@ -225,8 +227,28 @@ func (a *Analysis) registerHostElements(host string, section string, remoteIP st
 	}
 }
 
+// updateTraffic adds size to calculate traffic speed
+func (a *Analysis) updateTraffic(p *MetaPacket) {
+
+	dev := p.device
+	var bits int64
+	if p.messageType == httpResponse {
+		bits = p.response.ContentLength
+	} else {
+		bits = p.request.ContentLength
+	}
+
+	if _, ok := a.traffic[dev]; ok {
+		a.traffic[dev] += bits
+	} else {
+		a.traffic[dev] = bits
+	}
+}
+
 // updateAnalysis update's the report's current analysis with the new incoming packet information
 func (a *Analysis) updateAnalysis(p *MetaPacket) {
+
+	a.updateTraffic(p)
 
 	// If it is a response, we must have seen the corresponding host before, or we cannot work with it
 	if p.messageType == httpResponse {
@@ -271,9 +293,10 @@ func (a *Analysis) AddPacket(p *MetaPacket) {
 // NewAnalysis returns a new and empty Analysis struct
 func NewAnalysis() *Analysis {
 	return &Analysis{
-		packets:      nil,
-		nbHosts:      0,
-		hosts:        make(map[string]*hostStats),
+		packets: nil,
+		traffic: make(map[string]int64),
+		nbHosts: 0,
+		hosts:   make(map[string]*hostStats),
 		//lastSeenHost: nil,
 	}
 }
@@ -325,6 +348,7 @@ func NewReport(a *Analysis, t time.Time) *Report {
 	return &Report{
 		topHost:        topHost,
 		sortedSections: sortedSections,
+		traffic: a.traffic,
 		timestamp:      t,
 	}
 }

@@ -27,7 +27,7 @@ type Filter struct {
 	Network     string // BPF filter to filter traffic at data layer
 	Application string // String to look for in Application Layer
 	Type        string // Monitor filter in case further development adds other traffic analysis
-	NbSections	int	   // Number of sections to retain for top sections display
+	NbSections  int    // Number of sections to retain for top sections display
 }
 
 // Sync is a placeholder for synchronisation tools across goroutines
@@ -68,7 +68,7 @@ const (
 	defNetworkFilter           = "tcp and port 80"
 	defApplicationFilter       = "HTTP"
 	defApplicationType         = dataHTTP
-	defNbSection			   = 3
+	defNbSection               = 3
 	defSnapshotLen       int32 = 1024
 	defPromiscuousMode         = false
 	defCaptureTimeout          = defDisplayRefresh

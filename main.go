@@ -104,7 +104,6 @@ func test() {
 	testWait.Wait()
 }
 
-
 func main() {
 	test()
 }

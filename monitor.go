@@ -34,7 +34,7 @@ monitorLoop:
 			session.analysis = NewAnalysis()
 
 		case data := <-packetChan:
-			
+
 			// Handle http data type
 			if data.dataType == parameters.PacketFilter.Type {
 				// Transform data into a more convenient form
