@@ -1,4 +1,6 @@
-package gonetmon
+// Watchdog is an alert monitor that records a timestamp of each packet inside the current time frame
+// The Watchdog raises an alert if the number of packets meet a given threshold, and informs if alert has recovered
+package main
 
 import (
 	"container/list"
@@ -6,29 +8,27 @@ import (
 	"time"
 )
 
+// hitCache is a fifo LRU time-based cache of hits to monitor
 type hitCache struct {
 
 	// Channels to send operations on
-	push    chan time.Time
-	bufSize uint // size of channel
+	push    chan time.Time // Receive new entries through this channel
+	bufSize uint           // size of buffered channel
 
 	// Doubly linked list to hold values
 	list list.List
-
-	// Number of elements in current list
-	size uint
 }
 
-// Watchdog struct holds fifo LRU time-based cache and information necessary to watch for traffic spike
+// Watchdog struct holds the cache and information necessary to watch for traffic spike
 type Watchdog struct {
 
 	// Cache to store timely identified hits and time window to keep them
 	cache     hitCache
-	timeFrame time.Duration
-	tick      time.Duration
+	timeFrame time.Duration // Monitoring time frame / expiration time
+	tick      time.Duration // Interval at which to update cache
 
 	// Threshold above which an alert will be raised
-	threshold uint
+	threshold int
 
 	// Channel to send alerts to
 	alertChan chan<- alertMsg
@@ -42,11 +42,11 @@ type Watchdog struct {
 
 // Hits returns the current number of elements in the cache
 func (w *Watchdog) Hits() int {
-	return int(w.cache.size)
+	return w.cache.list.Len()
 }
 
+// buildAlertMsg builds an alert message appropriately to the current situation of recovery
 func buildAlertMsg(w *Watchdog, recovery bool, t time.Time) alertMsg {
-
 	var message string
 
 	if recovery {
@@ -81,7 +81,7 @@ func (w *Watchdog) verify() {
 	}
 
 	// Threshold reached
-	if w.cache.size >= w.threshold {
+	if w.cache.list.Len() >= w.threshold {
 		// New Alert
 		if !w.alert {
 			w.alert = true
@@ -94,8 +94,6 @@ func (w *Watchdog) verify() {
 			w.alertChan <- buildAlertMsg(w, true, time.Now())
 		}
 	}
-
-	return
 }
 
 // Evict pops all values from the cache that have passed the authorised window
@@ -111,7 +109,6 @@ func (w *Watchdog) evict(now time.Time) {
 		// If the element is older than allowed window
 		if now.Sub(e.Value.(time.Time)) > w.timeFrame {
 			w.cache.list.Remove(e)
-			w.cache.size--
 		} else {
 			// Since we store timed values incrementally, following values are all still valid
 			break
@@ -119,15 +116,41 @@ func (w *Watchdog) evict(now time.Time) {
 	}
 }
 
+// WatchdogRoutine continuously verifies the cache and will inform about alert status
+func WatchdogRoutine(dog *Watchdog, syn *Sync) {
+	defer syn.wg.Done()
+	ticker := time.NewTicker(dog.tick)
+watchdogLoop:
+	for {
+		select {
+
+		// Synchronisation/Exit trigger
+		case <-syn.syncChan:
+			ticker.Stop()
+			log.Info("Watchdog terminating.")
+			break watchdogLoop
+
+		// Continuously evict old elements
+		case t := <-ticker.C:
+			dog.evict(t)
+			dog.verify()
+
+		// Push request
+		case p := <-dog.cache.push:
+			dog.cache.list.PushBack(p)
+			dog.verify()
+		}
+	}
+}
+
 // NewWatchdog returns a watchdog struct and launches a goroutine that will observe its cache to detect alert triggering
 func NewWatchdog(parameters *Parameters, c chan<- alertMsg, syn *Sync) *Watchdog {
 
-	dog := Watchdog{
+	dog := &Watchdog{
 		cache: hitCache{
 			push:    make(chan time.Time, parameters.WatchdogBufSize),
 			bufSize: parameters.WatchdogBufSize,
 			list:    list.List{},
-			size:    0,
 		},
 		timeFrame: parameters.AlertSpan,
 		tick:      parameters.WatchdogTick,
@@ -139,32 +162,7 @@ func NewWatchdog(parameters *Parameters, c chan<- alertMsg, syn *Sync) *Watchdog
 
 	// Routine that continuously verifies the cache and will inform about alert status
 	syn.addRoutine()
-	go func() {
-		defer syn.wg.Done()
-		ticker := time.NewTicker(dog.tick)
-	watchdogLoop:
-		for {
-			select {
+	go WatchdogRoutine(dog, syn)
 
-			// Synchronisation/Exit trigger
-			case <-syn.syncChan:
-				ticker.Stop()
-				log.Info("Watchdog terminating.")
-				break watchdogLoop
-
-			// Continuously evict old elements
-			case t := <-ticker.C:
-				dog.evict(t)
-				dog.verify()
-
-			// Push request
-			case p := <-dog.cache.push:
-				dog.cache.list.PushBack(p)
-				dog.cache.size++
-				dog.verify()
-			}
-		}
-	}()
-
-	return &dog
+	return dog
 }
