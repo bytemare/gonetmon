@@ -1,4 +1,4 @@
-package main
+package gonetmon
 
 import (
 	"errors"
@@ -89,8 +89,8 @@ func Sniff(testWait *sync.WaitGroup) {
 	log.Info("Monitoring successfully stopped.")
 }
 
-func test() {
-	timeout := 180 * time.Second
+func SnifferTest(duration time.Duration) {
+
 	testWait := sync.WaitGroup{}
 	testWait.Add(1)
 	go Sniff(&testWait)
@@ -98,12 +98,12 @@ func test() {
 	p, _ := os.FindProcess(os.Getpid())
 
 	select {
-	case <-time.After(timeout):
+	case <-time.After(duration):
 		_ = p.Signal(os.Interrupt)
 	}
 	testWait.Wait()
 }
 
 func main() {
-	test()
+	SnifferTest(180 * time.Second)
 }

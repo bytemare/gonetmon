@@ -1,4 +1,4 @@
-package main
+package gonetmon
 
 import (
 	"github.com/google/gopacket"

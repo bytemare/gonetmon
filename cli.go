@@ -2,7 +2,7 @@
 //
 //Implemented Commands :
 //- stop
-package main
+package gonetmon
 
 import (
 	"io"

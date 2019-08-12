@@ -1,4 +1,4 @@
-package main
+package gonetmon
 
 import (
 	"container/list"
