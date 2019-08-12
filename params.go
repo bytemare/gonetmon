@@ -1,5 +1,5 @@
 // Params loads and holds configuration for runtime
-package gonetmon
+package main
 
 import (
 	"sync"
@@ -12,7 +12,7 @@ const (
 
 	// output
 	consoleOutput = "console"
-	fileOutput    = ""
+	//fileOutput    = ""
 )
 
 // CaptureConfig holds configuration for capturing packets
@@ -47,9 +47,9 @@ func (s *Sync) addRoutine() {
 type Parameters struct {
 
 	// Raw data parameters
-	PacketFilter  Filter
-	CaptureConfig CaptureConfig
-	Interfaces    []string // Array of interfaces to specifically listen on. If nil, listen on all devices.
+	PacketFilter        Filter
+	CaptureConfig       CaptureConfig
+	RequestedInterfaces []string // Array of interfaces to specifically listen on. If nil, listen on all devices.
 
 	// Display related parameters
 	DisplayRefresh time.Duration // Period (seconds) to renew display print, thus also used for capture and reporting
@@ -108,12 +108,12 @@ func LoadParams() *Parameters {
 			PromiscuousMode: defPromiscuousMode,
 			CaptureTimeout:  defCaptureTimeout,
 		},
-		Interfaces:      nil,
-		DisplayRefresh:  defDisplayRefresh,
-		DisplayType:     defDisplayType,
-		AlertSpan:       defAlertSpan,
-		AlertThreshold:  defAlertThreshold,
-		WatchdogTick:    defaultWatchdogTick,
-		WatchdogBufSize: defaultBufSize,
+		RequestedInterfaces: nil,
+		DisplayRefresh:      defDisplayRefresh,
+		DisplayType:         defDisplayType,
+		AlertSpan:           defAlertSpan,
+		AlertThreshold:      defAlertThreshold,
+		WatchdogTick:        defaultWatchdogTick,
+		WatchdogBufSize:     defaultBufSize,
 	}
 }
