@@ -12,6 +12,9 @@ os:
   - osx
 dist: trusty
 
+branches:
+  only:
+    - master
 
 addons:
   apt:
@@ -23,6 +26,7 @@ addons:
       secure: ${SONAR_TOKEN}
 git:
   depth: false # Sonar doesn't like shallow clones
+
 
 notifications:
   email: false
