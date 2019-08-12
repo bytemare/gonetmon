@@ -44,9 +44,8 @@ install:
 
 script:
   - go build
-  #- go build -v ./...
-  - ls -l
-  - go run Tests/RealTraffic/RealTraffic.go > /dev/null & sudo ./gonetmon
+  - sudo -E env "PATH=$PATH" go test -cover ./...
+  #- go run Tests/RealTraffic/RealTraffic.go > /dev/null & sudo ./gonetmon
 
 after_success:
   - sonar-scanner
