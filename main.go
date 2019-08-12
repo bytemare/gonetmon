@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"os"
 	"sync"
+	"time"
 )
 
 var log = logrus.New()
@@ -41,7 +42,8 @@ func Init() (*Parameters, *Devices, error) {
 }
 
 // Sniff is an example use of the tool
-func Sniff() {
+func Sniff(testWait *sync.WaitGroup) {
+	defer testWait.Done()
 	params, devices, err := Init()
 	if err != nil {
 		log.Fatal(err)
@@ -87,6 +89,22 @@ func Sniff() {
 	log.Info("Monitoring successfully stopped.")
 }
 
+func test() {
+	timeout := 180 * time.Second
+	testWait := sync.WaitGroup{}
+	testWait.Add(1)
+	go Sniff(&testWait)
+
+	p, _ := os.FindProcess(os.Getpid())
+
+	select {
+	case <-time.After(timeout):
+		_ = p.Signal(os.Interrupt)
+	}
+	testWait.Wait()
+}
+
+
 func main() {
-	Sniff()
+	test()
 }
