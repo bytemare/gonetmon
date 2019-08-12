@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	burst		= 20* time.Second
+	//burst		= 20* time.Second
 	duration	= 1 * time.Minute
 	//duration	= 5 * time.Second
 )
@@ -50,7 +50,7 @@ func main() {
 
 	url := "http://bbc.com/"
 	syn := make(chan struct{})
-	nbburst := 3
+	//nbburst := 3
 
 	go crawler(url, syn)
 
@@ -58,6 +58,7 @@ func main() {
 	for {
 		select {
 
+		/*
 		case <-time.After(burst):
 			if nbburst > 0 {
 				nbburst -= 1
@@ -68,6 +69,8 @@ func main() {
 			} else {
 				break loop
 			}
+
+		 */
 
 		case <-time.After(duration):
 			break loop
