@@ -27,6 +27,7 @@ type Filter struct {
 	Network     string // BPF filter to filter traffic at data layer
 	Application string // String to look for in Application Layer
 	Type        string // Monitor filter in case further development adds other traffic analysis
+	NbSections	int	   // Number of sections to retain for top sections display
 }
 
 // Sync is a placeholder for synchronisation tools across goroutines
@@ -67,12 +68,13 @@ const (
 	defNetworkFilter           = "tcp and port 80"
 	defApplicationFilter       = "HTTP"
 	defApplicationType         = dataHTTP
+	defNbSection			   = 3
 	defSnapshotLen       int32 = 1024
 	defPromiscuousMode         = false
 	defCaptureTimeout          = defDisplayRefresh
 
 	// Display Parameters
-	defDisplayRefresh = 5 * time.Second
+	defDisplayRefresh = 10 * time.Second
 	defDisplayType    = consoleOutput // Default output destination
 
 	// Format strings for display
@@ -80,8 +82,8 @@ const (
 	defRecoveryFormat = "Alert recovered at %s"
 
 	// Watchdog defaults
-	defAlertSpan        = 10 * time.Second
-	defAlertThreshold   = 4
+	defAlertSpan        = 120 * time.Second
+	defAlertThreshold   = 3000
 	defaultWatchdogTick = 500 * time.Millisecond
 	defaultBufSize      = 1000
 
@@ -99,6 +101,7 @@ func LoadParams() *Parameters {
 			Network:     defNetworkFilter,
 			Application: defApplicationFilter,
 			Type:        defApplicationType,
+			NbSections:  defNbSection,
 		},
 		CaptureConfig: CaptureConfig{
 			SnapshotLen:     defSnapshotLen,
