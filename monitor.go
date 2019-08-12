@@ -1,4 +1,5 @@
-package gonetmon
+// Monitor is the link between packet capture, alerting, and display, that accumulates data, analyses it and builds report to display
+package main
 
 import (
 	"github.com/sirupsen/logrus"
@@ -6,7 +7,7 @@ import (
 	"time"
 )
 
-// Monitor is a goroutine that listen on the dataChan channel to pull data packets for analysis
+// Monitor is a goroutine that listen on the packetChan channel to pull data packets for analysis, and reports to reportChan
 func Monitor(parameters *Parameters, packetChan <-chan packetMsg, reportChan chan<- *Report, alertChan chan<- alertMsg, syn *Sync) {
 	defer syn.wg.Done()
 
@@ -21,7 +22,7 @@ monitorLoop:
 		select {
 
 		case <-syn.syncChan:
-			log.Info("Monitor received sync message")
+			log.Info("Monitor received sync message.")
 			break monitorLoop
 
 		case tr := <-tickerReport.C:
@@ -30,7 +31,7 @@ monitorLoop:
 			// Build report and send to display
 			reportChan <- session.BuildReport(tr)
 
-			// Flush session analysis
+			// Renew session analysis
 			session.analysis = NewAnalysis()
 
 		case data := <-packetChan:
