@@ -45,6 +45,13 @@ func buildResponseOutput(status map[int]uint) string {
 	return output
 }
 
+func min(a int, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func displayToConsole(r *Report, alerts *[]string, p *Parameters) {
 	var output string
 
@@ -54,7 +61,7 @@ func displayToConsole(r *Report, alerts *[]string, p *Parameters) {
 	} else {
 		output += fmt.Sprintf(reportTop, r.topHost.host, r.topHost.hits)
 		output += fmt.Sprintf(reportResp+"\n", buildResponseOutput(r.topHost.responses.nbStatus))
-		for _, section := range r.sortedSections {
+		for _, section := range r.sortedSections[: min(p.PacketFilter.NbSections, len(r.sortedSections))] {
 			output += fmt.Sprintf(reportSection, section.section, section.nbHits)
 			output += fmt.Sprintf(reportReqs+"\n", buildRequestOutput(section.requests.nbMethods))
 		}
