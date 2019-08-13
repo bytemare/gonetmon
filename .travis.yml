@@ -9,23 +9,11 @@ env:
 
 os:
   - linux
-  - osx
 dist: trusty
 
 branches:
   only:
     - master
-
-matrix:
-  include:
-    - name: "Linux"
-      dist: trusty
-    - name: "MacOS"
-      os: osx
-  
-  allow_failures:
-    - "MacOS"
-  fast_finish: true
 
 addons:
   apt:
@@ -37,7 +25,6 @@ addons:
       secure: ${SONAR_TOKEN}
 git:
   depth: false # Sonar doesn't like shallow clones
-
 
 notifications:
   email: false
@@ -52,8 +39,6 @@ notifications:
 install:
   - cd Tests
   - go build sniffer.go
-  #- go mod init
-  #- go get -d -v ./...
 
 script:
   - go run RealTraffic/RealTraffic.go &> /dev/null & sudo ./sniffer -timeout=200
