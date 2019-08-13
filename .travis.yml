@@ -17,7 +17,14 @@ branches:
     - master
 
 matrix:
-  allow_failures: osx
+  include:
+    - name: "Linux"
+      dist: trusty
+    - name: "MacOS"
+      os: osx
+  
+  allow_failures:
+    - "MacOS"
   fast_finish: true
 
 addons:
