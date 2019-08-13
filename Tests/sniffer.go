@@ -3,12 +3,13 @@
 package main
 
 import (
+	"flag"
 	. "github.com/bytemare/gonetmon"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
 )
-import "flag"
+
 
 func main() {
 	var err error
