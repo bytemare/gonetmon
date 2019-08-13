@@ -13,7 +13,7 @@ dist: trusty
 
 branches:
   only:
-    - dev
+    - master
 
 addons:
   apt:
@@ -42,8 +42,8 @@ install:
   - go get -d -v ./...
 
 script:
-  - go install
-  - go run Tests/RealTraffic/RealTraffic.go &> /dev/null & sudo gonetmon -timeout=200
+  - go build
+  - go run Tests/RealTraffic/RealTraffic.go &> /dev/null & sudo ./gonetmon -timeout=200
 
 after_success:
   - sonar-scanner
