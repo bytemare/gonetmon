@@ -42,7 +42,7 @@ func Init() (*Parameters, *Devices, error) {
 }
 
 // Sniff is an example use of the tool
-func Sniff(testWait *sync.WaitGroup) error {
+func Sniff(testWait *sync.WaitGroup, result chan<- error) error {
 	if testWait != nil {
 		defer testWait.Done()
 	}
@@ -51,6 +51,9 @@ func Sniff(testWait *sync.WaitGroup) error {
 	params, devices, err := Init()
 	if err != nil {
 		log.Error(err)
+		if result != nil {
+			result <- err
+		}
 		return err
 	}
 
@@ -90,5 +93,8 @@ func Sniff(testWait *sync.WaitGroup) error {
 	log.Info("Waiting for all processes to stop.")
 	syn.wg.Wait()
 	log.Info("Monitoring successfully stopped.")
+	if result != nil {
+		result <- nil
+	}
 	return nil
 }
