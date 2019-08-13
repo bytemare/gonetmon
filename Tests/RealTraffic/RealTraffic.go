@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gocolly/colly"
-	//"github.com/gocolly/colly/debug"
+	"github.com/gocolly/colly/debug"
 	"regexp"
 	"time"
 )
@@ -19,7 +19,7 @@ func crawler(url string, syn <-chan struct{}) {
 	// Instantiate default collector
 	c := colly.NewCollector(
 		// Uncomment if you want output on visited sites
-		//colly.Debugger(&debug.LogDebugger{}),
+		colly.Debugger(&debug.LogDebugger{}),
 		colly.Async(true),
 		colly.URLFilters(
 			regexp.MustCompile("http://.+"), // Visit whatever website that runs on http
@@ -34,11 +34,10 @@ func crawler(url string, syn <-chan struct{}) {
 
 	c.OnRequest(func(r *colly.Request) {
 		// Uncomment if you want output on visited sites
-		//fmt.Println("Visiting", r.URL)
+		fmt.Println("Visiting", r.URL)
 	})
 
 	for i := 0; i < 16; i++ {
-		//_ = c.Visit(fmt.Sprintf("%s?n=%d", url, i))
 		_ = c.Visit(fmt.Sprintf("%s?n=%d", url, i))
 	}
 
