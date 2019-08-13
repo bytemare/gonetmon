@@ -21,6 +21,7 @@ func CLI(syn *Sync) {
 	for sig := range sigs {
 		log.Info("CLI received signal :", sig.String())
 		log.SetOutput(io.MultiWriter(os.Stdout, log.Out))
+		log.Info("Shutting down.")
 		log.Info("Logging to both file and console.")
 
 		// This Goroutine is not waiting for a stop signal/message, so we take one off

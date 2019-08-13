@@ -43,9 +43,7 @@ install:
 
 script:
   - go install
-  - go run Tests/RealTraffic/RealTraffic.go > /dev/null & go run Tests/sniff_test.go
-  #- cd Tests && sudo -E env "PATH=$PATH" go test -cover -coverprofile=c.out ./...
+  - go run Tests/RealTraffic/RealTraffic.go &> /dev/null & sudo gonetmon -timeout=200
 
 after_success:
   - sonar-scanner
-  #- sudo ./gonetmon
