@@ -16,6 +16,10 @@ branches:
   only:
     - master
 
+matrix:
+  allow_failures: osx
+  fast_finish: true
+
 addons:
   apt:
     packages:
