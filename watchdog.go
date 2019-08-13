@@ -1,6 +1,6 @@
 // Watchdog is an alert monitor that records a timestamp of each packet inside the current time frame
 // The Watchdog raises an alert if the number of packets meet a given threshold, and informs if alert has recovered
-package main
+package gonetmon
 
 import (
 	"container/list"

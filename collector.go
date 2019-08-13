@@ -1,6 +1,6 @@
 // Collector handles network packet capture operations
 // Behaviour and filters can be given as argument with parameters
-package main
+package gonetmon
 
 import (
 	"errors"

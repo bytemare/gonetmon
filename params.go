@@ -1,5 +1,5 @@
 // Params loads and holds configuration for runtime
-package main
+package gonetmon
 
 import (
 	"sync"

@@ -1,5 +1,5 @@
 // Monitor is the link between packet capture, alerting, and display, that accumulates data, analyses it and builds report to display
-package main
+package gonetmon
 
 import (
 	"github.com/sirupsen/logrus"

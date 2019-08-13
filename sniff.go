@@ -1,5 +1,5 @@
 // Sniff holds examples of initialising a session and manage different routines to perform monitoring
-package main
+package gonetmon
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"os"
 	"sync"
+	"time"
 )
 
 var log = logrus.New()
@@ -97,4 +98,42 @@ func Sniff(testWait *sync.WaitGroup, result chan<- error) error {
 		result <- nil
 	}
 	return nil
+}
+
+// SnifferTest is a wrapper function for Sniffer use with a timeout
+func SnifferTest(duration time.Duration) error {
+
+	testWait := sync.WaitGroup{}
+	testWait.Add(1)
+	result := make(chan error)
+	go Sniff(&testWait, result)
+
+	// Send interrupt signal after timeout
+	p, _ := os.FindProcess(os.Getpid())
+
+	var err error
+loop:
+	for {
+		select {
+		case err = <-result:
+			if err != nil {
+				log.Error("Sniffing returned with an error.")
+				log.Error(err)
+			}
+			break loop
+
+		case <-time.After(duration):
+			_ = p.Signal(os.Interrupt)
+			res := <-result
+			if res != nil {
+				log.Error("Sniffing returned with an error.")
+				log.Error(res)
+			}
+			err = res
+			break loop
+		}
+	}
+
+	testWait.Wait()
+	return err
 }

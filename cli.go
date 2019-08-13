@@ -2,7 +2,7 @@
 //
 //Implemented commands :
 //- stop : through SIGINT or SIGTERM signals
-package main
+package gonetmon
 
 import (
 	"io"

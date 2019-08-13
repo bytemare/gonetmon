@@ -1,5 +1,5 @@
 // Sessions represents a monitoring session
-package main
+package gonetmon
 
 import (
 	"bufio"

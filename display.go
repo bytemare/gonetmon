@@ -1,6 +1,6 @@
 // Display is in charge of rendering a report in to the format of the final output
 // For now, only console output is supported
-package main
+package gonetmon
 
 import (
 	"fmt"

@@ -1,5 +1,5 @@
 // Messages defines format for some messages that are sent over channels between routines
-package main
+package gonetmon
 
 import (
 	"github.com/google/gopacket"

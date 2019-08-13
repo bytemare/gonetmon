@@ -1,6 +1,6 @@
 // Analysis holds accumulated data during a time frame between two display refreshes, updates statistics and builds
 // the final report
-package main
+package gonetmon
 
 import (
 	"errors"
