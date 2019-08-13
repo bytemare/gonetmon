@@ -34,9 +34,9 @@ go get github.com/bytemare/gonetmon
 
 That just downloaded the project into your $GOPATH/src, and you're set.
 
-## 'I just wanna see what this stuff does'
+## 'Alright, get me to it !'
 
-Ok cowboy, here you go :
+Here you go :
 
 ```shell
 cd $GOPATH/src/github.com/bytemare/gonetmon/Tests
@@ -78,6 +78,27 @@ In every case, you can gracefully shut down the monitoring by gently hitting CTR
 
 For now all configuration parameters have default values in the code. But it is fairly easy to change them in order to change the programs behaviour, just take a look a [params.go](https://github.com/bytemare/gonetmon/blob/master/params.go).
 
-### Documentation
+## Documentation
 
-https://godoc.org/github.com/bytemare/gonetmon
+If you want to use specific functions, please read up on them in the [documentation](https://godoc.org/github.com/bytemare/gonetmon).
+
+## Todo
+
+Like all engineering projects, there's always room to do better, and these are some of the next things I want to do :
+
+### Corrections
+
+- Improve documentation and its layout
+- When shutting down, the collector continues logging received packets' IP addresses. That must have something to do with messages still in the PacketSource channel. It would be better if this wouldn't happen.
+
+### Features
+
+- Ability to fully configure program behaviour with command line arguments and configuration file
+- Richer logging
+- Add more and better logs
+- Make it work on MacOS
+- Make it work on Windows
+- during runtime, continually watch out for new devices being opened
+- export results to different formats : json and/or html to display it in a browser ?
+- TCP Stream reassembly : coherently reassemble packets and calculate connection quality based upon round-trips
+- Ability to add more filters
