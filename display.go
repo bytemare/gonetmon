@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -12,6 +13,7 @@ const (
 	clearConsole  = "\x1Bc"
 	topLine       = green + "[gonetmon]" + blue + " Refresh : %d seconds - Alert %d hits / %d seconds. - updated : %s" + stop
 	noReport      = "\t\t\t--- No report available : no traffic detected ---"
+	reportAlert	  = "Alert Watchdog :\t %s / %d hits over past %s"
 	reportTraffic = "HTTP traffic per interface :  %s"
 	reportTop     = "Top host : %s\t - %d hits\t"
 	reportResp    = "%s" // OK(%d), Redirect(%d), Server Error(%d), Client Error(%d)"
@@ -24,6 +26,17 @@ const (
 	blue  = "\033[34m"
 	stop  = "\033[0m"
 )
+
+// buildAlertBarOutput builds the line with the current number of hits over past time frame of alert watching
+func buildAlertBarOutput(r *Report, p *Parameters) string {
+	var output string
+	hits := strconv.Itoa(r.WatchdogHits)
+	if r.WatchdogHits >= p.AlertThreshold {
+		hits = red + hits + stop
+	}
+	output += fmt.Sprintf(reportAlert, hits, p.AlertThreshold, p.AlertSpan)
+	return output
+}
 
 // buildTrafficOutput builds and returns a string containing the bit rate and total amount of bits per network device
 func buildTrafficOutput(r *Report, p *Parameters) string {
@@ -68,6 +81,7 @@ func displayToConsole(r *Report, alerts *[]string, p *Parameters) {
 	var output string
 
 	output += fmt.Sprintf(topLine+"\n", int(p.DisplayRefresh.Seconds()), p.AlertThreshold, int(p.AlertSpan.Seconds()), time.Now().Format("2006-01-02 15:04:05"))
+	output += buildAlertBarOutput(r, p) + "\n"
 	if r.topHost == nil {
 		output += noReport + "\n"
 	} else {

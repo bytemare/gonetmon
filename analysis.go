@@ -85,10 +85,11 @@ type Analysis struct {
 
 // Report holds the final result of an analysis, to be sent out to display()
 type Report struct {
-	topHost   *hostStats
-	sections  []*sectionStats
-	traffic   map[string]int64
-	timestamp time.Time
+	topHost   		*hostStats
+	sections  		[]*sectionStats
+	WatchdogHits	int
+	traffic   		map[string]int64
+	timestamp 		time.Time
 }
 
 // updateSectionStats update statistics of a section with new data
@@ -288,7 +289,7 @@ func NewAnalysis() *Analysis {
 }
 
 // NewReport build a new report, containing the host with the most hits
-func NewReport(a *Analysis, t time.Time) *Report {
+func NewReport(a *Analysis, watchdogHits int, t time.Time) *Report {
 
 	// If no hosts were registered, we have nothing to report
 	if len(a.hosts) == 0 {
@@ -334,6 +335,7 @@ func NewReport(a *Analysis, t time.Time) *Report {
 	return &Report{
 		topHost:   topHost,
 		sections:  sections,
+		WatchdogHits: watchdogHits,
 		traffic:   a.traffic,
 		timestamp: t,
 	}

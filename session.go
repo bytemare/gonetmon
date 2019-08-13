@@ -25,8 +25,8 @@ func NewSession(parameters *Parameters, alertChan chan<- alertMsg, syn *Sync) *S
 }
 
 // BuildReport calls for a final analysis and returns the resulting report
-func (s *Session) BuildReport(t time.Time) *Report {
-	return NewReport(s.analysis, t)
+func (s *Session) BuildReport(watchdogHits int, t time.Time) *Report {
+	return NewReport(s.analysis, watchdogHits, t)
 }
 
 // readRequest is a wrapper around http.ReadRequest

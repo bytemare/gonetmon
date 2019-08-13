@@ -83,7 +83,7 @@ const (
 
 	// Watchdog defaults
 	defAlertSpan        = 120 * time.Second
-	defAlertThreshold   = 3000
+	defAlertThreshold   = 7000
 	defaultWatchdogTick = 500 * time.Millisecond
 	defaultBufSize      = 1000
 

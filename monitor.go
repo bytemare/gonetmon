@@ -29,7 +29,7 @@ monitorLoop:
 			log.Info("Preparing report.")
 
 			// Build report and send to display
-			reportChan <- session.BuildReport(tr)
+			reportChan <- session.BuildReport(session.watchdog.Hits(), tr)
 
 			// Renew session analysis
 			session.analysis = NewAnalysis()
