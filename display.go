@@ -13,7 +13,7 @@ const (
 	clearConsole  = "\x1Bc"
 	topLine       = green + "[gonetmon]" + blue + " Refresh : %d seconds - Alert %d hits / %d seconds. - updated : %s" + stop
 	noReport      = "\t\t\t--- No report available : no traffic detected ---"
-	reportAlert	  = "Alert Watchdog :\t %s / %d hits over past %s"
+	reportAlert   = "Alert Watchdog :\t %s / %d hits over past %s"
 	reportTraffic = "HTTP traffic per interface :  %s"
 	reportTop     = "Top host : %s\t - %d hits\t"
 	reportResp    = "%s" // OK(%d), Redirect(%d), Server Error(%d), Client Error(%d)"

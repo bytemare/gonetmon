@@ -17,7 +17,7 @@ type packetMsg struct {
 
 // alertMsg holds information about alert status updates
 type alertMsg struct {
-	recovery  bool   		// True if we recover from alert to no alert, false if not
-	body      string 		// Message to display
-	timestamp time.Time		// Date of alert or recovery
+	recovery  bool      // True if we recover from alert to no alert, false if not
+	body      string    // Message to display
+	timestamp time.Time // Date of alert or recovery
 }

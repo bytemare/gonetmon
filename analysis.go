@@ -51,8 +51,8 @@ func NewMetaPacket(data *packetMsg) *MetaPacket {
 
 // sectionStats holds all the available information about a section
 type sectionStats struct {
-	section  string       // Section of a website
-	nbHits   int          // Number of requests that were made for that section
+	section string // Section of a website
+	nbHits  int    // Number of requests that were made for that section
 	// Associated statistics
 	nbMethods map[string]uint // Map request methods to the number of times they were encountered
 }
@@ -77,7 +77,7 @@ type hostStats struct {
 // Analysis holds the packets and the result of a recording window
 type Analysis struct {
 	//packets []*MetaPacket			// The set of packets for this analysis
-	traffic map[string]int64		// maps device name and corresponding amount of bits
+	traffic map[string]int64 // maps device name and corresponding amount of bits
 	nbHosts int
 	hosts   map[string]*hostStats
 	//lastSeenHost *hostStats
@@ -85,11 +85,11 @@ type Analysis struct {
 
 // Report holds the final result of an analysis, to be sent out to display()
 type Report struct {
-	topHost   		*hostStats
-	sections  		[]*sectionStats
-	WatchdogHits	int
-	traffic   		map[string]int64
-	timestamp 		time.Time
+	topHost      *hostStats
+	sections     []*sectionStats
+	WatchdogHits int
+	traffic      map[string]int64
+	timestamp    time.Time
 }
 
 // updateSectionStats update statistics of a section with new data
@@ -130,8 +130,8 @@ func (a *Analysis) updateResponseStats(hostname string, res *http.Response) {
 // newSectionStats returns an empty set of statistics about a section
 func newSectionStats(section string) *sectionStats {
 	return &sectionStats{
-		section: section,
-		nbHits:  0,
+		section:   section,
+		nbHits:    0,
 		nbMethods: make(map[string]uint),
 	}
 }
@@ -333,10 +333,10 @@ func NewReport(a *Analysis, watchdogHits int, t time.Time) *Report {
 	log.Info("Analysis terminated, building and returning report.")
 
 	return &Report{
-		topHost:   topHost,
-		sections:  sections,
+		topHost:      topHost,
+		sections:     sections,
 		WatchdogHits: watchdogHits,
-		traffic:   a.traffic,
-		timestamp: t,
+		traffic:      a.traffic,
+		timestamp:    t,
 	}
 }

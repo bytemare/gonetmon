@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 func main() {
 	var err error
 	timeout := flag.Int("timeout", 0, "monitoring time in seconds. 0 or none is infinite")

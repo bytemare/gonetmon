@@ -57,7 +57,7 @@ type Parameters struct {
 
 	// Analysis related parameters
 	AlertSpan       time.Duration // Time (seconds) frame to monitor (and retain) traffic behaviour
-	AlertThreshold  int          // Number of request over time frame (hits/span) that will trigger an alert
+	AlertThreshold  int           // Number of request over time frame (hits/span) that will trigger an alert
 	WatchdogTick    time.Duration // Period (milliseconds, preferably) over which to check for alerts
 	WatchdogBufSize uint          // Size of the channel used to receive hit notification. Make it arbitrarily high. TODO: There may be a better way to do this
 }
