@@ -1,4 +1,5 @@
-package gonetmon
+// Sessions represents a monitoring session
+package main
 
 import (
 	"bufio"
@@ -23,9 +24,9 @@ func NewSession(parameters *Parameters, alertChan chan<- alertMsg, syn *Sync) *S
 	}
 }
 
-// BuildReport calls for a final analysis and collects the resulting report
-func (s *Session) BuildReport(t time.Time) *Report {
-	return NewReport(s.analysis, t)
+// BuildReport calls for a final analysis and returns the resulting report
+func (s *Session) BuildReport(watchdogHits int, t time.Time) *Report {
+	return NewReport(s.analysis, watchdogHits, t)
 }
 
 // readRequest is a wrapper around http.ReadRequest
@@ -73,7 +74,7 @@ func DataToHTTP(data *packetMsg) (*MetaPacket, error) {
 	b := []byte(appPayload)
 	bufReader := bufio.NewReader(bytes.NewReader(b))
 
-	// If it is a Response, it starts with 'HTTP/'
+	// If it is a Response, it should start with 'HTTP/'
 	if strings.HasPrefix(appPayload, "HTTP/") {
 
 		response, err := readResponse(bufReader)

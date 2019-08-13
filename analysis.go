@@ -1,4 +1,6 @@
-package gonetmon
+// Analysis holds accumulated data during a time frame between two display refreshes, updates statistics and builds
+// the final report
+package main
 
 import (
 	"errors"
@@ -47,28 +49,20 @@ func NewMetaPacket(data *packetMsg) *MetaPacket {
 	}
 }
 
-type requestStats struct {
-	nbReqs    uint            // Sum of all the elements
-	nbMethods map[string]uint // Map request methods to the number of times they were encountered
-}
-
-type responseStats struct {
-	nbResp   uint         // Sum of all registered elements
-	nbStatus map[int]uint // Map status codes to the number of times they were encountered
-}
-
+// sectionStats holds all the available information about a section
 type sectionStats struct {
 	section  string       // Section of a website
 	nbHits   int          // Number of requests that were made for that section
-	requests requestStats // Associated statistics
+	// Associated statistics
+	nbMethods map[string]uint // Map request methods to the number of times they were encountered
 }
 
-// SortedSections implements sort.Interface based on the hit field
-type SortedSections []*sectionStats
+// sections implements sort.Interface based on the hits of sectionStats
+type sortedSections []*sectionStats
 
-func (s SortedSections) Len() int           { return len(s) }
-func (s SortedSections) Less(i, j int) bool { return s[i].nbHits > s[j].nbHits }
-func (s SortedSections) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s sortedSections) Len() int           { return len(s) }
+func (s sortedSections) Less(i, j int) bool { return s[i].nbHits > s[j].nbHits }
+func (s sortedSections) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 // hostStats holds information about traffic with a host
 type hostStats struct {
@@ -77,13 +71,13 @@ type hostStats struct {
 	hits     int                      // Number of successfully recognised packets associated with that host
 	sections map[string]*sectionStats // Statistics about requested sections of that host
 	// Statistics about responses on that host
-	responses responseStats // Statistics about responses from that hosts
+	nbStatus map[int]uint // Map status codes to the number of times they were encountered
 }
 
 // Analysis holds the packets and the result of a recording window
 type Analysis struct {
-	packets []*MetaPacket      // A set of packets to be analysed
-	traffic map[string]int64 // maps device name and corresponding amount of bits
+	//packets []*MetaPacket			// The set of packets for this analysis
+	traffic map[string]int64		// maps device name and corresponding amount of bits
 	nbHosts int
 	hosts   map[string]*hostStats
 	//lastSeenHost *hostStats
@@ -91,13 +85,14 @@ type Analysis struct {
 
 // Report holds the final result of an analysis, to be sent out to display()
 type Report struct {
-	topHost        *hostStats
-	sortedSections []*sectionStats
-	traffic 		map[string]int64
+	topHost   		*hostStats
+	sections  		[]*sectionStats
+	WatchdogHits	int
+	traffic   		map[string]int64
 	timestamp 		time.Time
 }
 
-// Update statistics of a section with new data
+// updateSectionStats update statistics of a section with new data
 func (a *Analysis) updateSectionStats(hostname string, sectionName string, req *http.Request) {
 
 	host := a.hosts[hostname]
@@ -107,15 +102,14 @@ func (a *Analysis) updateSectionStats(hostname string, sectionName string, req *
 
 	// Update Hits
 	section.nbHits++
-	section.requests.nbReqs++
 
 	method := req.Method
 
 	// If method was not yet registered, do it
-	if _, ok := section.requests.nbMethods[method]; !ok {
-		section.requests.nbMethods[method] = 0
+	if _, ok := section.nbMethods[method]; !ok {
+		section.nbMethods[method] = 0
 	}
-	section.requests.nbMethods[method]++
+	section.nbMethods[method]++
 }
 
 // updateResponseStats updates data for hostname with relevant data
@@ -124,14 +118,13 @@ func (a *Analysis) updateResponseStats(hostname string, res *http.Response) {
 	host := a.hosts[hostname]
 	host.hits++
 	//a.lastSeenHost = host
-	host.responses.nbResp++
 
 	status := res.StatusCode
 	// If status code has not yet been encountered, add it
-	if _, ok := host.responses.nbStatus[status]; !ok {
-		host.responses.nbStatus[status] = 0
+	if _, ok := host.nbStatus[status]; !ok {
+		host.nbStatus[status] = 0
 	}
-	host.responses.nbStatus[status]++
+	host.nbStatus[status]++
 }
 
 // newSectionStats returns an empty set of statistics about a section
@@ -139,10 +132,7 @@ func newSectionStats(section string) *sectionStats {
 	return &sectionStats{
 		section: section,
 		nbHits:  0,
-		requests: requestStats{
-			nbReqs:    0,
-			nbMethods: make(map[string]uint),
-		},
+		nbMethods: make(map[string]uint),
 	}
 }
 
@@ -153,10 +143,7 @@ func newHostStats(host string) *hostStats {
 		ips:      []string{},
 		hits:     0,
 		sections: make(map[string]*sectionStats),
-		responses: responseStats{
-			nbResp:   0,
-			nbStatus: make(map[int]uint),
-		},
+		nbStatus: make(map[int]uint),
 	}
 }
 
@@ -285,7 +272,7 @@ func (a *Analysis) updateAnalysis(p *MetaPacket) {
 
 // AddPacket adds a packet to the report
 func (a *Analysis) AddPacket(p *MetaPacket) {
-	a.packets = append(a.packets, p)
+	//a.packets = append(a.packets, p)
 
 	a.updateAnalysis(p)
 }
@@ -293,7 +280,7 @@ func (a *Analysis) AddPacket(p *MetaPacket) {
 // NewAnalysis returns a new and empty Analysis struct
 func NewAnalysis() *Analysis {
 	return &Analysis{
-		packets: nil,
+		//packets: nil,
 		traffic: make(map[string]int64),
 		nbHosts: 0,
 		hosts:   make(map[string]*hostStats),
@@ -302,15 +289,15 @@ func NewAnalysis() *Analysis {
 }
 
 // NewReport build a new report, containing the host with the most hits
-func NewReport(a *Analysis, t time.Time) *Report {
+func NewReport(a *Analysis, watchdogHits int, t time.Time) *Report {
 
 	// If no hosts were registered, we have nothing to report
 	if len(a.hosts) == 0 {
 		log.Info("No hosts in analysis to build report on.")
 		return &Report{
-			topHost:        nil,
-			sortedSections: nil,
-			timestamp:      t,
+			topHost:   nil,
+			sections:  nil,
+			timestamp: t,
 		}
 	}
 
@@ -328,27 +315,28 @@ func NewReport(a *Analysis, t time.Time) *Report {
 	if topHost == nil {
 		log.Error("Could not find a topHost on a non-empty set of Hosts. THIS SHOULD NOT HAPPEN.")
 		return &Report{
-			topHost:        nil,
-			sortedSections: nil,
-			timestamp:      t,
+			topHost:   nil,
+			sections:  nil,
+			timestamp: t,
 		}
 	}
 
-	// Copy sections of host into a slice
-	sortedSections := make([]*sectionStats, len(topHost.sections))
+	// Copy sections of host into a slice for sorting
+	sections := make([]*sectionStats, len(topHost.sections))
 	i := 0
 	for _, stats := range topHost.sections {
-		sortedSections[i] = stats
+		sections[i] = stats
 		i++
 	}
-	sort.Sort(SortedSections(sortedSections))
+	sort.Sort(sortedSections(sections))
 
-	log.Info("sections ", sortedSections)
+	log.Info("Analysis terminated, building and returning report.")
 
 	return &Report{
-		topHost:        topHost,
-		sortedSections: sortedSections,
-		traffic: a.traffic,
-		timestamp:      t,
+		topHost:   topHost,
+		sections:  sections,
+		WatchdogHits: watchdogHits,
+		traffic:   a.traffic,
+		timestamp: t,
 	}
 }

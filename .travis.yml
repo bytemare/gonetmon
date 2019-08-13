@@ -2,14 +2,13 @@ language: go
 
 go:
   - 1.11.12
-  #- 1.12
+  - 1.12
 
 env:
   - GO111MODULE=on
 
 os:
   - linux
-  - osx
 dist: trusty
 
 branches:
@@ -44,9 +43,7 @@ install:
 
 script:
   - go build
-  - cd Tests && sudo -E env "PATH=$PATH" go test -cover -coverprofile=c.out ./...
-  #- go run Tests/RealTraffic/RealTraffic.go > /dev/null & sudo ./gonetmon
+  - go run Tests/RealTraffic/RealTraffic.go &> /dev/null & sudo ./gonetmon -timeout=200
 
 after_success:
   - sonar-scanner
-  #- sudo ./gonetmon

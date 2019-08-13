@@ -1,4 +1,6 @@
-package gonetmon
+// Collector handles network packet capture operations
+// Behaviour and filters can be given as argument with parameters
+package main
 
 import (
 	"errors"
@@ -22,7 +24,7 @@ type Devices struct {
 // If the interfaces parameter is not nil, only open those specified.
 func InitialiseCapture(parameters *Parameters) (*Devices, error) {
 
-	devices := findDevices(parameters.Interfaces)
+	devices := findDevices(parameters.RequestedInterfaces)
 
 	if devices == nil {
 		return nil, errors.New("could not find any devices")
@@ -56,6 +58,7 @@ func InitialiseCapture(parameters *Parameters) (*Devices, error) {
 // selectDevices returns an array of requested interfaces among those available in the devices argument
 func selectDevices(requestedInterfaces []string, devices []net.Interface) ([]net.Interface, error) {
 	var tailoredList []net.Interface
+
 interfacesLoop:
 	for _, i := range requestedInterfaces {
 
@@ -98,17 +101,17 @@ func findDevices(requestedInterfaces []string) []net.Interface {
 		return nil
 	}
 
-	if len(devices) == 0 {
+	if devices == nil || len(devices) == 0 {
 		log.Error("Could not find any network devices (but no error occurred).")
 		return nil
 	}
 
 	// Purge interfaces that don't have their state flag UP
-	for index, d := range devices {
-		if d.Flags&(net.FlagUp) == 0 {
-			// Flag is down, Interface is deactivated, purge element
-			devices[index] = devices[len(devices)-1]
-			devices = devices[:len(devices)-1]
+	cpy := devices[:0]
+	for _, d := range devices {
+		if d.Flags&(net.FlagUp) == 1 {
+			// Flag is up, Interface is activated, keep element
+			cpy = append(cpy, d)
 		}
 	}
 
@@ -143,11 +146,12 @@ func openDevice(device net.Interface, config *CaptureConfig) (*pcap.Handle, erro
 	return handle, nil
 }
 
-// Closes listening on a device
+// closeDevice closes listening on a device
 func closeDevice(h *pcap.Handle) {
 	h.Close()
 }
 
+// closeDevices closes all devices given
 func closeDevices(devices *Devices) {
 	for index, dev := range devices.devices {
 		log.Info("Closing device on interface ", dev.Name)
@@ -160,7 +164,7 @@ func addFilter(handle *pcap.Handle, filter string) error {
 	return handle.SetBPFFilter(filter)
 }
 
-// sniffApplicationLayer tells whether the packet contains the filter string
+// sniffApplicationLayer tells whether the packet contains the filter string in its application layer
 func sniffApplicationLayer(packet gopacket.Packet, filter string) bool {
 	var isApp = false
 	applicationLayer := packet.ApplicationLayer()
@@ -198,6 +202,7 @@ func getDeviceIP(device *net.Interface) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// Don't keep the network mask
 	address := add[0].String()[:strings.IndexByte(add[0].String(), '/')]
 	return address, nil
 }
