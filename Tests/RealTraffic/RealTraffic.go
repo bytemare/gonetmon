@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	burst    = 20 * time.Second
-	duration = 1 * time.Minute
+	burst    = 10 * time.Second
+	duration = 40 * time.Minute
 	//duration	= 5 * time.Second
 )
 
