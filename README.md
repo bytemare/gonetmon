@@ -90,6 +90,7 @@ Like all engineering projects, there's always room to do better, and these are s
 
 - Improve documentation and its layout
 - When shutting down, the collector continues logging received packets' IP addresses. That must have something to do with messages still in the PacketSource channel. It would be better if this wouldn't happen.
+- Proper 'init()' functions that takes profit of go's 'init()' interpretation
 
 ### Features
 

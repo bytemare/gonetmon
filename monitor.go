@@ -1,13 +1,12 @@
-// Monitor is the link between packet capture, alerting, and display, that accumulates data, analyses it and builds report to display
 package gonetmon
 
 import (
 	"github.com/sirupsen/logrus"
-	"strings"
+	"golang.org/x/tools/go/ssa/interp/testdata/src/strings"
 	"time"
 )
 
-// Monitor is a goroutine that listen on the packetChan channel to pull data packets for analysis, and reports to reportChan
+//Monitor is the link between packet capture, alerting, and display, that accumulates data, analyses it and builds report to display
 func Monitor(parameters *Parameters, packetChan <-chan packetMsg, reportChan chan<- *Report, alertChan chan<- alertMsg, syn *Sync) {
 	defer syn.wg.Done()
 

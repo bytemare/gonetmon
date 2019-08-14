@@ -1,4 +1,3 @@
-// Params loads and holds configuration for runtime
 package gonetmon
 
 import (
@@ -13,6 +12,36 @@ const (
 	// output
 	consoleOutput = "console"
 	//fileOutput    = ""
+)
+
+// Default values for program parameters
+const (
+	// Capture default
+	defNetworkFilter           = "tcp and port 80"
+	defApplicationFilter       = "HTTP"
+	defApplicationType         = dataHTTP
+	defNbSection               = 3
+	defSnapshotLen       int32 = 1024
+	defPromiscuousMode         = false
+	defCaptureTimeout          = defDisplayRefresh
+
+	// Display Parameters
+	defDisplayRefresh = 10 * time.Second
+	defDisplayType    = consoleOutput // Default output destination
+
+	// Format strings for display
+	defAlertFormat    = "High traffic generated an alert - hits = %d, triggered at %s"
+	defRecoveryFormat = "Alert recovered at %s"
+
+	// Watchdog defaults
+	defAlertSpan        = 120 * time.Second
+	defAlertThreshold   = 7000
+	defaultWatchdogTick = 500 * time.Millisecond
+	defaultBufSize      = 1000
+
+	// General
+	defLogFile    = "./log-gonetmon.log"
+	defTimeLayout = "2006-01-02 15:04:05.124"
 )
 
 // CaptureConfig holds configuration for capturing packets
@@ -61,36 +90,6 @@ type Parameters struct {
 	WatchdogTick    time.Duration // Period (milliseconds, preferably) over which to check for alerts
 	WatchdogBufSize uint          // Size of the channel used to receive hit notification. Make it arbitrarily high. TODO: There may be a better way to do this
 }
-
-// Default values for Parameter object
-const (
-	// Capture default
-	defNetworkFilter           = "tcp and port 80"
-	defApplicationFilter       = "HTTP"
-	defApplicationType         = dataHTTP
-	defNbSection               = 3
-	defSnapshotLen       int32 = 1024
-	defPromiscuousMode         = false
-	defCaptureTimeout          = defDisplayRefresh
-
-	// Display Parameters
-	defDisplayRefresh = 10 * time.Second
-	defDisplayType    = consoleOutput // Default output destination
-
-	// Format strings for display
-	defAlertFormat    = "High traffic generated an alert - hits = %d, triggered at %s"
-	defRecoveryFormat = "Alert recovered at %s"
-
-	// Watchdog defaults
-	defAlertSpan        = 120 * time.Second
-	defAlertThreshold   = 7000
-	defaultWatchdogTick = 500 * time.Millisecond
-	defaultBufSize      = 1000
-
-	// General
-	defLogFile    = "./log-gonetmon.log"
-	defTimeLayout = "2006-01-02 15:04:05.124"
-)
 
 // LoadParams loads the application's parameters it should run on into an object and returns it
 func LoadParams() *Parameters {

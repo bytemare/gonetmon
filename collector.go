@@ -1,12 +1,10 @@
-// Collector handles network packet capture operations
-// Behaviour and filters can be given as argument with parameters
 package gonetmon
 
 import (
 	"errors"
 	"fmt"
 	"github.com/google/gopacket"
-	_ "github.com/google/gopacket/layers"
+	//_ "github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"github.com/sirupsen/logrus"
 	"net"
@@ -242,6 +240,7 @@ func capturePackets(device net.Interface, handle *pcap.Handle, filter *Filter, w
 }
 
 // Collector listens on all network devices for relevant traffic and sends packets to packetChan
+// Behaviour and filters can be given as argument with parameters
 func Collector(parameters *Parameters, devices *Devices, packetChan chan packetMsg, syn *Sync) {
 	defer syn.wg.Done()
 

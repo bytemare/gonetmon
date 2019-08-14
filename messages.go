@@ -1,4 +1,3 @@
-// Messages defines format for some messages that are sent over channels between routines
 package gonetmon
 
 import (

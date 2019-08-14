@@ -1,4 +1,3 @@
-// Sessions represents a monitoring session
 package gonetmon
 
 import (
@@ -10,7 +9,7 @@ import (
 	"time"
 )
 
-// Session is a placeholder for current analysis and report, and Watchdog reference
+// Session is a placeholder for current analysis and Watchdog reference
 type Session struct {
 	analysis *Analysis // Current ongoing analysis
 	watchdog *Watchdog // Surveil traffic behaviour and raise alert if need

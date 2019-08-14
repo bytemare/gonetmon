@@ -1,4 +1,3 @@
-// Sniff holds examples of initialising a session and manage different routines to perform monitoring
 package gonetmon
 
 import (
@@ -42,7 +41,7 @@ func Init() (*Parameters, *Devices, error) {
 	return params, devices, nil
 }
 
-// Sniff is an example use of the tool
+// Sniff holds examples of initialising a session and manage different routines to perform monitoring
 func Sniff(testWait *sync.WaitGroup, result chan<- error) error {
 	if testWait != nil {
 		defer testWait.Done()

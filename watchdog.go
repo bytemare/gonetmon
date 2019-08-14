@@ -1,5 +1,3 @@
-// Watchdog is an alert monitor that records a timestamp of each packet inside the current time frame
-// The Watchdog raises an alert if the number of packets meet a given threshold, and informs if alert has recovered
 package gonetmon
 
 import (
@@ -116,7 +114,9 @@ func (w *Watchdog) evict(now time.Time) {
 	}
 }
 
-// WatchdogRoutine continuously verifies the cache and will inform about alert status
+// WatchdogRoutine is an alert monitor that records a timestamp of each packet inside the current time frame.
+// The Watchdog raises an alert if the number of packets meet a given threshold, and informs if alert has recovered.
+// It continuously verifies the cache and will inform about alert status
 func WatchdogRoutine(dog *Watchdog, syn *Sync) {
 	defer syn.wg.Done()
 	ticker := time.NewTicker(dog.tick)

@@ -1,5 +1,3 @@
-// Analysis holds accumulated data during a time frame between two display refreshes, updates statistics and builds
-// the final report
 package gonetmon
 
 import (
@@ -74,7 +72,7 @@ type hostStats struct {
 	nbStatus map[int]uint // Map status codes to the number of times they were encountered
 }
 
-// Analysis holds the packets and the result of a recording window
+// Analysis holds accumulated data during a time frame between two display refreshes
 type Analysis struct {
 	//packets []*MetaPacket			// The set of packets for this analysis
 	traffic map[string]int64 // maps device name and corresponding amount of bits

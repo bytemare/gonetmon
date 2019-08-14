@@ -1,5 +1,3 @@
-// Display is in charge of rendering a report in to the format of the final output
-// For now, only console output is supported
 package gonetmon
 
 import (
@@ -115,7 +113,8 @@ func outputReport(r *Report, alerts *[]string, parameters *Parameters) {
 
 }
 
-// Display loops on receiving channels to print alerts and reports
+// Display is in charge of rendering a report in to the format of the final output
+// For now, only console output is supported
 func Display(parameters *Parameters, reportChan <-chan *Report, alertChan <-chan alertMsg, syn *Sync) {
 	defer syn.wg.Done()
 

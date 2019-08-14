@@ -1,7 +1,3 @@
-// CLI acts as a command interface that allows an operator to interact with the tool through CLI.
-//
-//Implemented commands :
-//- stop : through SIGINT or SIGTERM signals
 package gonetmon
 
 import (
@@ -11,7 +7,10 @@ import (
 	"syscall"
 )
 
-// CLI handles command line interactions
+// CLI acts as a command interface that allows an operator to interact with the tool through CLI.
+//
+// Implemented commands :
+// - stop : through SIGINT or SIGTERM signals
 func CLI(syn *Sync) {
 	defer syn.wg.Done()
 
