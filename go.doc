@@ -1,3 +1,4 @@
+/*
 gonetmon is a HTTP trafic monitor, capturing packets on all open interfaces and presenting results to the console.
 
 It uses gopacket to sniff traffic packets and, based on filters, allows to select allowed packets and analyse them further.
@@ -11,3 +12,6 @@ gonetmon's main features are :
 	* alerting whenever the traffic hits a defined threshold, and when it recovered.
 
 The project contains a ready-to-use monitor to start checking out traffic.
+
+*/
+package gonetmon
