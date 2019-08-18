@@ -2,7 +2,7 @@ package gonetmon
 
 import (
 	"github.com/sirupsen/logrus"
-	"golang.org/x/tools/go/ssa/interp/testdata/src/strings"
+	"strings"
 	"time"
 )
 
