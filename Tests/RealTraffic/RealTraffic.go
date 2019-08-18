@@ -58,7 +58,7 @@ loop:
 
 		case <-time.After(burst):
 			if nbburst > 0 {
-				nbburst -= 1
+				nbburst--
 				syn <- struct{}{}
 				//fmt.Println("Pause...")
 				time.Sleep(burst)

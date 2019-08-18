@@ -4,7 +4,7 @@ package main
 
 import (
 	"flag"
-	. "github.com/bytemare/gonetmon"
+	"github.com/bytemare/gonetmon"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
@@ -17,11 +17,11 @@ func main() {
 
 	if *timeout > 0 {
 		log.Info("Started with timeout : ", *timeout)
-		err = SnifferTest(time.Duration(*timeout) * time.Second)
+		err = gonetmon.SnifferTest(time.Duration(*timeout) * time.Second)
 
 	} else {
 		log.Info("Started without timeout : ", *timeout)
-		err = Sniff(nil, nil)
+		err = gonetmon.Sniff(nil, nil)
 	}
 
 	if err == nil {
