@@ -22,11 +22,6 @@ type watchdog struct {
 
 	// Cache to store timely identified hits and time window to keep them
 	cache     hitCache
-	timeFrame time.Duration // Monitoring time frame / expiration time
-	tick      time.Duration // Interval at which to update cache
-
-	// Threshold above which an alert will be raised
-	threshold int
 
 	// Channel to send alerts to
 	alertChan chan<- alertMsg
@@ -79,7 +74,7 @@ func (w *watchdog) verify() {
 	}
 
 	// Threshold reached
-	if w.cache.list.Len() >= w.threshold {
+	if w.cache.list.Len() >= config.alert.threshold {
 		// New Alert
 		if !w.alert {
 			w.alert = true
@@ -105,7 +100,7 @@ func (w *watchdog) evict(now time.Time) {
 		e := w.cache.list.Front()
 
 		// If the element is older than allowed window
-		if now.Sub(e.Value.(time.Time)) > w.timeFrame {
+		if now.Sub(e.Value.(time.Time)) > config.alert.span {
 			w.cache.list.Remove(e)
 		} else {
 			// Since we store timed values incrementally, following values are all still valid
@@ -119,7 +114,7 @@ func (w *watchdog) evict(now time.Time) {
 // It continuously verifies the cache and will inform about alert status
 func WatchdogRoutine(dog *watchdog, syn *synchronisation) {
 	defer syn.wg.Done()
-	ticker := time.NewTicker(dog.tick)
+	ticker := time.NewTicker(config.alert.watchdogTick)
 watchdogLoop:
 	for {
 		select {
@@ -152,9 +147,6 @@ func NewWatchdog(c chan<- alertMsg, syn *synchronisation) *watchdog {
 			bufSize: config.alert.watchdogBufSize,
 			list:    list.List{},
 		},
-		timeFrame: config.alert.span,
-		tick:      config.alert.watchdogTick,
-		threshold: config.alert.threshold,
 		alertChan: c,
 		alert:     false,
 		syn:       syn,
