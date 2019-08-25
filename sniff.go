@@ -1,31 +1,18 @@
 package gonetmon
 
 import (
-	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"sync"
 	"time"
 )
 
-var log = logrus.New()
-
 // Init initialises Sniffing and Monitoring
 // TODO: Load configuration from file or command line to initialise parameters
-func Init() (*Parameters, *Devices, error) {
-
-	// Must be root or sudo
-	if os.Geteuid() != 0 {
-		log.Error("Geteuid is not 0 : not running with elevated privileges.")
-		return nil, nil, errors.New("you must run this program with elevated privileges in order to capture traffic. Try running with sudo")
-	}
-
-	// Load default parameters
-	params := LoadParams()
+func Init() (*configuration, *devices, error) {
 
 	// Check whether we can capture packets
-	devices, err := InitialiseCapture(params)
+	devices, err := InitialiseCapture(config)
 	if err != nil {
 		return nil, nil, fmt.Errorf("initialising capture failed : %s", err)
 	}
@@ -38,7 +25,7 @@ func Init() (*Parameters, *Devices, error) {
 		log.Info("Failed to log to file, using default stderr")
 	}
 
-	return params, devices, nil
+	return config, devices, nil
 }
 
 // Sniff holds examples of initialising a session and manage different routines to perform monitoring
@@ -58,7 +45,7 @@ func Sniff(testWait *sync.WaitGroup, result chan<- error) error {
 	}
 
 	// IPCs
-	syn := &Sync{
+	syn := &synchronisation{
 		wg:          sync.WaitGroup{},
 		syncChan:    make(chan struct{}),
 		nbReceivers: 0,
@@ -66,7 +53,7 @@ func Sniff(testWait *sync.WaitGroup, result chan<- error) error {
 	syn.addRoutine() // add this main process
 
 	packetChan := make(chan packetMsg, 1000)
-	reportChan := make(chan *Report, 1)
+	reportChan := make(chan *report, 1)
 	alertChan := make(chan alertMsg, 1)
 
 	// Run Sniffer/Collector
@@ -87,7 +74,7 @@ func Sniff(testWait *sync.WaitGroup, result chan<- error) error {
 
 	log.Info("Capturing set up.")
 
-	// Sync and shutdown
+	// synchronisation and shutdown
 	syn.wg.Done()
 	<-syn.syncChan
 	log.Info("Waiting for all processes to stop.")
