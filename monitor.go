@@ -11,7 +11,7 @@ func Monitor(packetChan <-chan packetMsg, reportChan chan<- *report, alertChan c
 	defer syn.wg.Done()
 
 	// Start a new monitoring session
-	session := NewSession(config, alertChan, syn)
+	session := NewSession(alertChan, syn)
 
 	// Set up ticker to regularly send reports to display
 	tickerReport := time.NewTicker(config.displayRefresh)
