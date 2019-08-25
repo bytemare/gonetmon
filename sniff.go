@@ -1,31 +1,20 @@
 package gonetmon
 
 import (
-	"fmt"
 	"os"
 	"sync"
 	"time"
 )
 
-// Init initialises Sniffing and Monitoring
-// TODO: Load configuration from file or command line to initialise parameters
-func Init() (*devices, error) {
 
-	// Check whether we can capture packets
-	devices, err := InitialiseCapture()
-	if err != nil {
-		return nil, fmt.Errorf("initialising capture failed : %s", err)
-	}
-
-	// Past this point, log to file
+// log2File switches logging to be output to file only
+func log2File() {
 	file, err := os.OpenFile(defLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err == nil {
 		log.Out = file
 	} else {
 		log.Info("Failed to log to file, using default stderr")
 	}
-
-	return devices, nil
 }
 
 // Sniff holds examples of initialising a session and manage different routines to perform monitoring
@@ -35,14 +24,17 @@ func Sniff(testWait *sync.WaitGroup, result chan<- error) error {
 	}
 
 	// Initialise, and fail if conditions are not met
-	devices, err := Init()
+	devices, err := InitialiseCapture()
 	if err != nil {
-		log.Error(err)
+		log.Errorf("Initialising capture failed : %s", err)
 		if result != nil {
 			result <- err
 		}
 		return err
 	}
+
+	// Past this point, log to file
+	log2File()
 
 	// IPCs
 	syn := &synchronisation{
