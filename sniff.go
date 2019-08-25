@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-
 // log2File switches logging to be output to file only
 func log2File() {
 	file, err := os.OpenFile(defLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)

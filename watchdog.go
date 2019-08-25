@@ -21,7 +21,7 @@ type hitCache struct {
 type watchdog struct {
 
 	// Cache to store timely identified hits and time window to keep them
-	cache     hitCache
+	cache hitCache
 
 	// Channel to send alerts to
 	alertChan chan<- alertMsg
