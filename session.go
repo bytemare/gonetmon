@@ -9,22 +9,22 @@ import (
 	"time"
 )
 
-// Session is a placeholder for current analysis and Watchdog reference
-type Session struct {
-	analysis *Analysis // Current ongoing analysis
-	watchdog *Watchdog // Surveil traffic behaviour and raise alert if need
+// session is a placeholder for current analysis and watchdog reference
+type session struct {
+	analysis *analysis // Current ongoing analysis
+	watchdog *watchdog // Surveil traffic behaviour and raise alert if need
 }
 
-// NewSession initialises a new monitoring session and launches a Watchdog goroutine
-func NewSession(parameters *Parameters, alertChan chan<- alertMsg, syn *Sync) *Session {
-	return &Session{
+// NewSession initialises a new monitoring session and launches a watchdog goroutine
+func NewSession(parameters *configuration, alertChan chan<- alertMsg, syn *synchronisation) *session {
+	return &session{
 		analysis: NewAnalysis(),
 		watchdog: NewWatchdog(parameters, alertChan, syn),
 	}
 }
 
 // BuildReport calls for a final analysis and returns the resulting report
-func (s *Session) BuildReport(watchdogHits int, t time.Time) *Report {
+func (s *session) BuildReport(watchdogHits int, t time.Time) *report {
 	return NewReport(s.analysis, watchdogHits, t)
 }
 

@@ -11,7 +11,7 @@ import (
 //
 // Implemented commands :
 // - stop : through SIGINT or SIGTERM signals
-func CLI(syn *Sync) {
+func CLI(syn *synchronisation) {
 	defer syn.wg.Done()
 
 	sigs := make(chan os.Signal, 1)

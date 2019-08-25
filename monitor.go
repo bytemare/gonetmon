@@ -7,14 +7,14 @@ import (
 )
 
 //Monitor is the link between packet capture, alerting, and display, that accumulates data, analyses it and builds report to display
-func Monitor(parameters *Parameters, packetChan <-chan packetMsg, reportChan chan<- *Report, alertChan chan<- alertMsg, syn *Sync) {
+func Monitor(parameters *configuration, packetChan <-chan packetMsg, reportChan chan<- *report, alertChan chan<- alertMsg, syn *synchronisation) {
 	defer syn.wg.Done()
 
 	// Start a new monitoring session
 	session := NewSession(parameters, alertChan, syn)
 
 	// Set up ticker to regularly send reports to display
-	tickerReport := time.NewTicker(parameters.DisplayRefresh)
+	tickerReport := time.NewTicker(parameters.displayRefresh)
 
 monitorLoop:
 	for {
@@ -36,7 +36,7 @@ monitorLoop:
 		case data := <-packetChan:
 
 			// Handle http data type
-			if data.dataType == parameters.PacketFilter.Type {
+			if data.dataType == parameters.packetFilter.dataType {
 				// Transform data into a more convenient form
 				packet, err := DataToHTTP(&data)
 				if err != nil {
@@ -51,7 +51,7 @@ monitorLoop:
 				// Add packet to analysis
 				session.analysis.AddPacket(packet)
 
-				// Update Watchdog
+				// Update watchdog
 				session.watchdog.AddHit(packet.packet.Metadata().Timestamp)
 			}
 		}

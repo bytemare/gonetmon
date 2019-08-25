@@ -72,8 +72,8 @@ type hostStats struct {
 	nbStatus map[int]uint // Map status codes to the number of times they were encountered
 }
 
-// Analysis holds accumulated data during a time frame between two display refreshes
-type Analysis struct {
+// analysis holds accumulated data during a time frame between two display refreshes
+type analysis struct {
 	//packets []*MetaPacket			// The set of packets for this analysis
 	traffic map[string]int64 // maps device name and corresponding amount of bits
 	nbHosts int
@@ -81,17 +81,17 @@ type Analysis struct {
 	//lastSeenHost *hostStats
 }
 
-// Report holds the final result of an analysis, to be sent out to display()
-type Report struct {
+// report holds the final result of an analysis, to be sent out to display()
+type report struct {
 	topHost      *hostStats
 	sections     []*sectionStats
-	WatchdogHits int
+	watchdogHits int
 	traffic      map[string]int64
 	timestamp    time.Time
 }
 
 // updateSectionStats update statistics of a section with new data
-func (a *Analysis) updateSectionStats(hostname string, sectionName string, req *http.Request) {
+func (a *analysis) updateSectionStats(hostname string, sectionName string, req *http.Request) {
 
 	host := a.hosts[hostname]
 	host.hits++
@@ -111,7 +111,7 @@ func (a *Analysis) updateSectionStats(hostname string, sectionName string, req *
 }
 
 // updateResponseStats updates data for hostname with relevant data
-func (a *Analysis) updateResponseStats(hostname string, res *http.Response) {
+func (a *analysis) updateResponseStats(hostname string, res *http.Response) {
 
 	host := a.hosts[hostname]
 	host.hits++
@@ -149,7 +149,7 @@ func newHostStats(host string) *hostStats {
 // There's no standard trace of the remote host in the Response header,
 // so the only way that's left is to see if we can match the remote address with a host's address we've already seen
 // before with a request
-func getHost(p *MetaPacket, a *Analysis) (string, error) {
+func getHost(p *MetaPacket, a *analysis) (string, error) {
 
 	// If it's a request, it's in the header
 	if p.messageType == httpRequest {
@@ -190,7 +190,7 @@ func getSection(req *http.Request) string {
 }
 
 // registerHostElements adds new remote IP and section to a host if they were not present
-func (a *Analysis) registerHostElements(host string, section string, remoteIP string) {
+func (a *analysis) registerHostElements(host string, section string, remoteIP string) {
 
 	hosts := a.hosts
 
@@ -213,7 +213,7 @@ func (a *Analysis) registerHostElements(host string, section string, remoteIP st
 }
 
 // updateTraffic adds size to calculate traffic speed
-func (a *Analysis) updateTraffic(p *MetaPacket) {
+func (a *analysis) updateTraffic(p *MetaPacket) {
 
 	dev := p.device
 	var bits int64
@@ -231,7 +231,7 @@ func (a *Analysis) updateTraffic(p *MetaPacket) {
 }
 
 // updateAnalysis update's the report's current analysis with the new incoming packet information
-func (a *Analysis) updateAnalysis(p *MetaPacket) {
+func (a *analysis) updateAnalysis(p *MetaPacket) {
 
 	a.updateTraffic(p)
 
@@ -269,15 +269,15 @@ func (a *Analysis) updateAnalysis(p *MetaPacket) {
 }
 
 // AddPacket adds a packet to the report
-func (a *Analysis) AddPacket(p *MetaPacket) {
+func (a *analysis) AddPacket(p *MetaPacket) {
 	//a.packets = append(a.packets, p)
 
 	a.updateAnalysis(p)
 }
 
-// NewAnalysis returns a new and empty Analysis struct
-func NewAnalysis() *Analysis {
-	return &Analysis{
+// NewAnalysis returns a new and empty analysis struct
+func NewAnalysis() *analysis {
+	return &analysis{
 		//packets: nil,
 		traffic: make(map[string]int64),
 		nbHosts: 0,
@@ -287,12 +287,12 @@ func NewAnalysis() *Analysis {
 }
 
 // NewReport build a new report, containing the host with the most hits
-func NewReport(a *Analysis, watchdogHits int, t time.Time) *Report {
+func NewReport(a *analysis, watchdogHits int, t time.Time) *report {
 
 	// If no hosts were registered, we have nothing to report
 	if len(a.hosts) == 0 {
 		log.Info("No hosts in analysis to build report on.")
-		return &Report{
+		return &report{
 			topHost:   nil,
 			sections:  nil,
 			timestamp: t,
@@ -312,7 +312,7 @@ func NewReport(a *Analysis, watchdogHits int, t time.Time) *Report {
 	// This should not happen, as we avoid the case above, but for the sake of it
 	if topHost == nil {
 		log.Error("Could not find a topHost on a non-empty set of Hosts. THIS SHOULD NOT HAPPEN.")
-		return &Report{
+		return &report{
 			topHost:   nil,
 			sections:  nil,
 			timestamp: t,
@@ -330,10 +330,10 @@ func NewReport(a *Analysis, watchdogHits int, t time.Time) *Report {
 
 	log.Info("Analysis terminated, building and returning report.")
 
-	return &Report{
+	return &report{
 		topHost:      topHost,
 		sections:     sections,
-		WatchdogHits: watchdogHits,
+		watchdogHits: watchdogHits,
 		traffic:      a.traffic,
 		timestamp:    t,
 	}

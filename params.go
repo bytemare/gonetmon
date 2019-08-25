@@ -25,7 +25,7 @@ const (
 	defPromiscuousMode         = false
 	defCaptureTimeout          = defDisplayRefresh
 
-	// Display Parameters
+	// Display configuration
 	defDisplayRefresh = 10 * time.Second
 	defDisplayType    = consoleOutput // Default output destination
 
@@ -33,7 +33,7 @@ const (
 	defAlertFormat    = "High traffic generated an alert - hits = %d, triggered at %s"
 	defRecoveryFormat = "Alert recovered at %s"
 
-	// Watchdog defaults
+	// watchdog defaults
 	defAlertSpan        = 120 * time.Second
 	defAlertThreshold   = 7000
 	defaultWatchdogTick = 500 * time.Millisecond
@@ -44,35 +44,35 @@ const (
 	defTimeLayout = "2006-01-02 15:04:05.124"
 )
 
-// CaptureConfig holds configuration for capturing packets
-type CaptureConfig struct {
-	SnapshotLen     int32         // Maximum size to read for each packet
-	PromiscuousMode bool          // Whether to ut the interface in promiscuous mode
-	CaptureTimeout  time.Duration // Period to listen for traffic before sending out captured traffic
+// captureConfig holds configuration for capturing packets
+type captureConfig struct {
+	snapshotLen     int32         // Maximum size to read for each packet
+	promiscuousMode bool          // Whether to ut the interface in promiscuous mode
+	captureTimeout  time.Duration // Period to listen for traffic before sending out captured traffic
 }
 
-// Filter holds different filters on different levels to apply and tag data
-type Filter struct {
-	Network     string // BPF filter to filter traffic at data layer
-	Application string // String to look for in Application Layer
-	Type        string // Monitor filter in case further development adds other traffic analysis
-	NbSections  int    // Number of sections to retain for top sections display
+// filter holds different filters on different levels to apply and tag data
+type filter struct {
+	network     string // BPF filter to filter traffic at data layer
+	application string // String to look for in application Layer
+	dataType    string // Monitor filter in case further development adds other traffic analysis
+	nbSections  int    // Number of sections to retain for top sections display
 }
 
-// Sync is a placeholder for synchronisation tools across goroutines
-type Sync struct {
+// synchronisation is a placeholder for synchronisation tools across goroutines
+type synchronisation struct {
 	wg          sync.WaitGroup
 	syncChan    chan struct{}
 	nbReceivers uint
 }
 
 // addRoutine increments the number of goroutines to be synced and waiting for a message on the channel
-func (s *Sync) addRoutine() {
+func (s *synchronisation) addRoutine() {
 	s.wg.Add(1)
 	s.nbReceivers++
 }
 
-// alertVars Analysis related parameters
+// alertVars analysis related parameters
 type alertVars struct {
 	span            time.Duration // Time (seconds) frame to monitor (and retain) traffic behaviour
 	threshold       int           // Number of request over time frame (hits/span) that will trigger an alert
@@ -80,40 +80,40 @@ type alertVars struct {
 	watchdogBufSize uint          // Size of the channel used to receive hit notification. Make it arbitrarily high. TODO: There may be a better way to do this
 }
 
-// Parameters holds the application's parameters it runs on
-type Parameters struct {
+// configuration holds the application's parameters it runs on
+type configuration struct {
 
 	// Raw data parameters
-	PacketFilter        Filter
-	CaptureConfig       CaptureConfig
-	RequestedInterfaces []string // Array of interfaces to specifically listen on. If nil, listen on all devices.
+	packetFilter        filter
+	captureConf         captureConfig
+	requestedInterfaces []string // Array of interfaces to specifically listen on. If nil, listen on all devices.
 
 	// Display related parameters
-	DisplayRefresh time.Duration // Period (seconds) to renew display print, thus also used for capture and reporting
-	DisplayType    string        // Type of display output
+	displayRefresh time.Duration // Period (seconds) to renew display print, thus also used for capture and reporting
+	displayType    string        // Type of display output
 
 	alert	alertVars
 }
 
 // LoadParams loads the application's parameters it should run on into an object and returns it
-func LoadParams() *Parameters {
+func LoadParams() *configuration {
 	// Todo : There should be a better way of doing this + argument validation
 
-	return &Parameters{
-		PacketFilter: Filter{
-			Network:     defNetworkFilter,
-			Application: defApplicationFilter,
-			Type:        defApplicationType,
-			NbSections:  defNbSection,
+	return &configuration{
+		packetFilter: filter{
+			network:     defNetworkFilter,
+			application: defApplicationFilter,
+			dataType:    defApplicationType,
+			nbSections:  defNbSection,
 		},
-		CaptureConfig: CaptureConfig{
-			SnapshotLen:     defSnapshotLen,
-			PromiscuousMode: defPromiscuousMode,
-			CaptureTimeout:  defCaptureTimeout,
+		captureConf: captureConfig{
+			snapshotLen:     defSnapshotLen,
+			promiscuousMode: defPromiscuousMode,
+			captureTimeout:  defCaptureTimeout,
 		},
-		RequestedInterfaces: nil,
-		DisplayRefresh:      defDisplayRefresh,
-		DisplayType:         defDisplayType,
+		requestedInterfaces: nil,
+		displayRefresh:      defDisplayRefresh,
+		displayType:         defDisplayType,
 		alert:alertVars{
 			span:                defAlertSpan,
 			threshold:           defAlertThreshold,

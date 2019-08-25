@@ -17,8 +17,8 @@ type hitCache struct {
 	list list.List
 }
 
-// Watchdog struct holds the cache and information necessary to watch for traffic spike
-type Watchdog struct {
+// watchdog struct holds the cache and information necessary to watch for traffic spike
+type watchdog struct {
 
 	// Cache to store timely identified hits and time window to keep them
 	cache     hitCache
@@ -35,16 +35,16 @@ type Watchdog struct {
 	alert bool
 
 	// Synchronisation
-	syn *Sync
+	syn *synchronisation
 }
 
 // Hits returns the current number of elements in the cache
-func (w *Watchdog) Hits() int {
+func (w *watchdog) Hits() int {
 	return w.cache.list.Len()
 }
 
 // buildAlertMsg builds an alert message appropriately to the current situation of recovery
-func buildAlertMsg(w *Watchdog, recovery bool, t time.Time) alertMsg {
+func buildAlertMsg(w *watchdog, recovery bool, t time.Time) alertMsg {
 	var message string
 
 	if recovery {
@@ -61,12 +61,12 @@ func buildAlertMsg(w *Watchdog, recovery bool, t time.Time) alertMsg {
 }
 
 // AddHit adds an element to the cache by sending a push request to the goroutine
-func (w *Watchdog) AddHit(t time.Time) {
+func (w *watchdog) AddHit(t time.Time) {
 	w.cache.push <- t
 }
 
 // Verify checks the cache, raising or lowering the alert and sending a message if necessary
-func (w *Watchdog) verify() {
+func (w *watchdog) verify() {
 
 	// If the cache is empty, no need to go further
 	if w.cache.list.Len() <= 0 {
@@ -95,7 +95,7 @@ func (w *Watchdog) verify() {
 }
 
 // Evict pops all values from the cache that have passed the authorised window
-func (w *Watchdog) evict(now time.Time) {
+func (w *watchdog) evict(now time.Time) {
 	for {
 
 		if w.cache.list.Len() <= 0 {
@@ -115,9 +115,9 @@ func (w *Watchdog) evict(now time.Time) {
 }
 
 // WatchdogRoutine is an alert monitor that records a timestamp of each packet inside the current time frame.
-// The Watchdog raises an alert if the number of packets meet a given threshold, and informs if alert has recovered.
+// The watchdog raises an alert if the number of packets meet a given threshold, and informs if alert has recovered.
 // It continuously verifies the cache and will inform about alert status
-func WatchdogRoutine(dog *Watchdog, syn *Sync) {
+func WatchdogRoutine(dog *watchdog, syn *synchronisation) {
 	defer syn.wg.Done()
 	ticker := time.NewTicker(dog.tick)
 watchdogLoop:
@@ -127,7 +127,7 @@ watchdogLoop:
 		// Synchronisation/Exit trigger
 		case <-syn.syncChan:
 			ticker.Stop()
-			log.Info("Watchdog terminating.")
+			log.Info("watchdog terminating.")
 			break watchdogLoop
 
 		// Continuously evict old elements
@@ -144,9 +144,9 @@ watchdogLoop:
 }
 
 // NewWatchdog returns a watchdog struct and launches a goroutine that will observe its cache to detect alert triggering
-func NewWatchdog(parameters *Parameters, c chan<- alertMsg, syn *Sync) *Watchdog {
+func NewWatchdog(parameters *configuration, c chan<- alertMsg, syn *synchronisation) *watchdog {
 
-	dog := &Watchdog{
+	dog := &watchdog{
 		cache: hitCache{
 			push:    make(chan time.Time, parameters.alert.watchdogBufSize),
 			bufSize: parameters.alert.watchdogBufSize,

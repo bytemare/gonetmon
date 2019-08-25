@@ -12,30 +12,29 @@ import (
 	"sync"
 )
 
-// Devices is a couple of arrays to hold corresponding devices with their handles
-type Devices struct {
+// devices is a couple of arrays to hold corresponding devices with their handles
+type devices struct {
 	devices []net.Interface
 	handles []*pcap.Handle
 }
 
 // InitialiseCapture opens device interfaces and associated handles to listen on, returns a map of these.
 // If the interfaces parameter is not nil, only open those specified.
-func InitialiseCapture(parameters *Parameters) (*Devices, error) {
+func InitialiseCapture(parameters *configuration) (*devices, error) {
 
-	devices := findDevices(parameters.RequestedInterfaces)
-
-	if devices == nil {
+	interfaceDevices := findDevices(parameters.requestedInterfaces)
+	if interfaceDevices == nil {
 		return nil, errors.New("could not find any devices")
 	}
 
-	devs := &Devices{
+	devs := &devices{
 		devices: []net.Interface{},
 		handles: []*pcap.Handle{},
 	}
 
-	for _, d := range devices {
+	for _, d := range interfaceDevices {
 		// Try to open all devices for capture
-		if h, err := openDevice(d, &parameters.CaptureConfig); err != nil {
+		if h, err := openDevice(d, &parameters.captureConf); err != nil {
 			log.WithFields(logrus.Fields{
 				"error": err,
 			}).Error("Could not open device for capture.")
@@ -126,8 +125,8 @@ func findDevices(requestedInterfaces []string) []net.Interface {
 }
 
 // openDevice opens a live listener on the interface designated by the device parameter and returns a corresponding handle
-func openDevice(device net.Interface, config *CaptureConfig) (*pcap.Handle, error) {
-	handle, err := pcap.OpenLive(device.Name, config.SnapshotLen, config.PromiscuousMode, config.CaptureTimeout)
+func openDevice(device net.Interface, config *captureConfig) (*pcap.Handle, error) {
+	handle, err := pcap.OpenLive(device.Name, config.snapshotLen, config.promiscuousMode, config.captureTimeout)
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"interface": device.Name,
@@ -150,7 +149,7 @@ func closeDevice(h *pcap.Handle) {
 }
 
 // closeDevices closes all devices given
-func closeDevices(devices *Devices) {
+func closeDevices(devices *devices) {
 	for index, dev := range devices.devices {
 		log.Info("Closing device on interface ", dev.Name)
 		closeDevice(devices.handles[index])
@@ -207,7 +206,7 @@ func getDeviceIP(device *net.Interface) (string, error) {
 
 // capturePacket continuously listens to a device interface managed by handle, and extracts relevant packets from traffic
 // to send it to packetChan
-func capturePackets(device net.Interface, handle *pcap.Handle, filter *Filter, wg *sync.WaitGroup, packetChan chan<- packetMsg) {
+func capturePackets(device net.Interface, handle *pcap.Handle, filter *filter, wg *sync.WaitGroup, packetChan chan<- packetMsg) {
 	defer wg.Done()
 
 	log.Info("Capturing packets on ", device.Name)
@@ -216,7 +215,7 @@ func capturePackets(device net.Interface, handle *pcap.Handle, filter *Filter, w
 
 	// This will loop on a channel that will send packages, and will quit when the handle is closed by another caller
 	for packet := range packetSource.Packets() {
-		if sniffApplicationLayer(packet, filter.Application) {
+		if sniffApplicationLayer(packet, filter.application) {
 
 			ip, err := getDeviceIP(&device)
 			if err != nil {
@@ -227,7 +226,7 @@ func capturePackets(device net.Interface, handle *pcap.Handle, filter *Filter, w
 			}
 
 			packetChan <- packetMsg{
-				dataType:  filter.Type,
+				dataType:  filter.dataType,
 				device:    device.Name,
 				deviceIP:  ip,
 				remoteIP:  getRemoteIP(packet, ip),
@@ -241,7 +240,7 @@ func capturePackets(device net.Interface, handle *pcap.Handle, filter *Filter, w
 
 // Collector listens on all network devices for relevant traffic and sends packets to packetChan
 // Behaviour and filters can be given as argument with parameters
-func Collector(parameters *Parameters, devices *Devices, packetChan chan packetMsg, syn *Sync) {
+func Collector(parameters *configuration, devices *devices, packetChan chan packetMsg, syn *synchronisation) {
 	defer syn.wg.Done()
 
 	collWG := sync.WaitGroup{}
@@ -249,14 +248,14 @@ func Collector(parameters *Parameters, devices *Devices, packetChan chan packetM
 	for index, dev := range devices.devices {
 		collWG.Add(1)
 		h := devices.handles[index]
-		if err := addFilter(h, parameters.PacketFilter.Network); err != nil {
+		if err := addFilter(h, parameters.packetFilter.network); err != nil {
 			log.WithFields(logrus.Fields{
 				"interface": dev.Name,
 				"error":     err,
 			}).Error("Could not set filter on device. Closing.")
 			closeDevice(h)
 		}
-		go capturePackets(dev, h, &parameters.PacketFilter, &collWG, packetChan)
+		go capturePackets(dev, h, &parameters.packetFilter, &collWG, packetChan)
 	}
 
 	// Wait until sync to stop
