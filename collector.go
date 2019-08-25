@@ -20,9 +20,9 @@ type devices struct {
 
 // InitialiseCapture opens device interfaces and associated handles to listen on, returns a map of these.
 // If the interfaces parameter is not nil, only open those specified.
-func InitialiseCapture(parameters *configuration) (*devices, error) {
+func InitialiseCapture() (*devices, error) {
 
-	interfaceDevices := findDevices(parameters.requestedInterfaces)
+	interfaceDevices := findDevices(config.requestedInterfaces)
 	if interfaceDevices == nil {
 		return nil, errors.New("could not find any devices")
 	}
@@ -34,7 +34,7 @@ func InitialiseCapture(parameters *configuration) (*devices, error) {
 
 	for _, d := range interfaceDevices {
 		// Try to open all devices for capture
-		if h, err := openDevice(d, &parameters.captureConf); err != nil {
+		if h, err := openDevice(d, &config.captureConf); err != nil {
 			log.WithFields(logrus.Fields{
 				"error": err,
 			}).Error("Could not open device for capture.")
@@ -240,7 +240,7 @@ func capturePackets(device net.Interface, handle *pcap.Handle, filter *filter, w
 
 // Collector listens on all network devices for relevant traffic and sends packets to packetChan
 // Behaviour and filters can be given as argument with parameters
-func Collector(parameters *configuration, devices *devices, packetChan chan packetMsg, syn *synchronisation) {
+func Collector(devices *devices, packetChan chan packetMsg, syn *synchronisation) {
 	defer syn.wg.Done()
 
 	collWG := sync.WaitGroup{}
@@ -248,14 +248,14 @@ func Collector(parameters *configuration, devices *devices, packetChan chan pack
 	for index, dev := range devices.devices {
 		collWG.Add(1)
 		h := devices.handles[index]
-		if err := addFilter(h, parameters.packetFilter.network); err != nil {
+		if err := addFilter(h, config.packetFilter.network); err != nil {
 			log.WithFields(logrus.Fields{
 				"interface": dev.Name,
 				"error":     err,
 			}).Error("Could not set filter on device. Closing.")
 			closeDevice(h)
 		}
-		go capturePackets(dev, h, &parameters.packetFilter, &collWG, packetChan)
+		go capturePackets(dev, h, &config.packetFilter, &collWG, packetChan)
 	}
 
 	// Wait until sync to stop

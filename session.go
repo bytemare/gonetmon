@@ -16,10 +16,10 @@ type session struct {
 }
 
 // NewSession initialises a new monitoring session and launches a watchdog goroutine
-func NewSession(parameters *configuration, alertChan chan<- alertMsg, syn *synchronisation) *session {
+func NewSession(alertChan chan<- alertMsg, syn *synchronisation) *session {
 	return &session{
 		analysis: NewAnalysis(),
-		watchdog: NewWatchdog(parameters, alertChan, syn),
+		watchdog: NewWatchdog(alertChan, syn),
 	}
 }
 

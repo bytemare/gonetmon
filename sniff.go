@@ -9,12 +9,12 @@ import (
 
 // Init initialises Sniffing and Monitoring
 // TODO: Load configuration from file or command line to initialise parameters
-func Init() (*configuration, *devices, error) {
+func Init() (*devices, error) {
 
 	// Check whether we can capture packets
-	devices, err := InitialiseCapture(config)
+	devices, err := InitialiseCapture()
 	if err != nil {
-		return nil, nil, fmt.Errorf("initialising capture failed : %s", err)
+		return nil, fmt.Errorf("initialising capture failed : %s", err)
 	}
 
 	// Past this point, log to file
@@ -25,7 +25,7 @@ func Init() (*configuration, *devices, error) {
 		log.Info("Failed to log to file, using default stderr")
 	}
 
-	return config, devices, nil
+	return devices, nil
 }
 
 // Sniff holds examples of initialising a session and manage different routines to perform monitoring
@@ -35,7 +35,7 @@ func Sniff(testWait *sync.WaitGroup, result chan<- error) error {
 	}
 
 	// Initialise, and fail if conditions are not met
-	params, devices, err := Init()
+	devices, err := Init()
 	if err != nil {
 		log.Error(err)
 		if result != nil {
@@ -58,15 +58,15 @@ func Sniff(testWait *sync.WaitGroup, result chan<- error) error {
 
 	// Run Sniffer/Collector
 	syn.addRoutine()
-	go Collector(params, devices, packetChan, syn)
+	go Collector(devices, packetChan, syn)
 
 	// Run monitoring
 	syn.addRoutine()
-	go Monitor(params, packetChan, reportChan, alertChan, syn)
+	go Monitor(packetChan, reportChan, alertChan, syn)
 
 	// Run display to print result
 	syn.addRoutine()
-	go Display(params, reportChan, alertChan, syn)
+	go Display(reportChan, alertChan, syn)
 
 	// Run CLI
 	syn.addRoutine()

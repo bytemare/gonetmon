@@ -75,15 +75,15 @@ func min(a int, b int) int {
 */
 
 // displayToConsole builds the final report with passed alerts, clears the terminal and prints the result
-func displayToConsole(r *report, alerts *[]string, p *configuration) {
+func displayToConsole(r *report, alerts *[]string) {
 	var output string
 
-	output += fmt.Sprintf(topLine+"\n", int(p.displayRefresh.Seconds()), p.alert.threshold, int(p.alert.span.Seconds()), time.Now().Format("2006-01-02 15:04:05"))
-	output += buildAlertBarOutput(r, p) + "\n"
+	output += fmt.Sprintf(topLine+"\n", int(config.displayRefresh.Seconds()), config.alert.threshold, int(config.alert.span.Seconds()), time.Now().Format("2006-01-02 15:04:05"))
+	output += buildAlertBarOutput(r, config) + "\n"
 	if r.topHost == nil {
 		output += noReport + "\n"
 	} else {
-		output += fmt.Sprintf(reportTraffic+"\n", buildTrafficOutput(r, p))
+		output += fmt.Sprintf(reportTraffic+"\n", buildTrafficOutput(r, config))
 		output += fmt.Sprintf(reportTop, r.topHost.host, r.topHost.hits)
 		output += fmt.Sprintf(reportResp+"\n", buildResponseOutput(r.topHost.nbStatus))
 		//for _, section := range r.sections[:min(p.PacketFilter.NbSections, len(r.sections))] {
@@ -99,11 +99,11 @@ func displayToConsole(r *report, alerts *[]string, p *configuration) {
 }
 
 // outputReport is a selector between outputs : for now, only console is supported
-func outputReport(r *report, alerts *[]string, parameters *configuration) {
+func outputReport(r *report, alerts *[]string) {
 
-	switch parameters.displayType {
+	switch config.displayType {
 	case consoleOutput:
-		displayToConsole(r, alerts, parameters)
+		displayToConsole(r, alerts)
 
 		// TODO
 		/*case fileOutput :
@@ -115,18 +115,18 @@ func outputReport(r *report, alerts *[]string, parameters *configuration) {
 
 // Display is in charge of rendering a report in to the format of the final output
 // For now, only console output is supported
-func Display(parameters *configuration, reportChan <-chan *report, alertChan <-chan alertMsg, syn *synchronisation) {
+func Display(reportChan <-chan *report, alertChan <-chan alertMsg, syn *synchronisation) {
 	defer syn.wg.Done()
 
 	var alerts []string
 
 	// Display empty monitoring console
-	if parameters.displayType == consoleOutput {
+	if config.displayType == consoleOutput {
 		displayToConsole(&report{
 			topHost:   nil,
 			sections:  nil,
 			timestamp: time.Now(),
-		}, &alerts, parameters)
+		}, &alerts)
 	}
 
 displayLoop:
@@ -147,7 +147,7 @@ displayLoop:
 
 		case report := <-reportChan:
 			// Interpret report and adapt to desired output
-			outputReport(report, &alerts, parameters)
+			outputReport(report, &alerts)
 		}
 	}
 

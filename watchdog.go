@@ -144,17 +144,17 @@ watchdogLoop:
 }
 
 // NewWatchdog returns a watchdog struct and launches a goroutine that will observe its cache to detect alert triggering
-func NewWatchdog(parameters *configuration, c chan<- alertMsg, syn *synchronisation) *watchdog {
+func NewWatchdog(c chan<- alertMsg, syn *synchronisation) *watchdog {
 
 	dog := &watchdog{
 		cache: hitCache{
-			push:    make(chan time.Time, parameters.alert.watchdogBufSize),
-			bufSize: parameters.alert.watchdogBufSize,
+			push:    make(chan time.Time, config.alert.watchdogBufSize),
+			bufSize: config.alert.watchdogBufSize,
 			list:    list.List{},
 		},
-		timeFrame: parameters.alert.span,
-		tick:      parameters.alert.watchdogTick,
-		threshold: parameters.alert.threshold,
+		timeFrame: config.alert.span,
+		tick:      config.alert.watchdogTick,
+		threshold: config.alert.threshold,
 		alertChan: c,
 		alert:     false,
 		syn:       syn,

@@ -92,7 +92,7 @@ type configuration struct {
 	displayRefresh time.Duration // Period (seconds) to renew display print, thus also used for capture and reporting
 	displayType    string        // Type of display output
 
-	alert	alertVars
+	alert alertVars
 }
 
 // LoadParams loads the application's parameters it should run on into an object and returns it
@@ -114,11 +114,11 @@ func LoadParams() *configuration {
 		requestedInterfaces: nil,
 		displayRefresh:      defDisplayRefresh,
 		displayType:         defDisplayType,
-		alert:alertVars{
-			span:                defAlertSpan,
-			threshold:           defAlertThreshold,
-			watchdogTick:        defaultWatchdogTick,
-			watchdogBufSize:     defaultBufSize,
+		alert: alertVars{
+			span:            defAlertSpan,
+			threshold:       defAlertThreshold,
+			watchdogTick:    defaultWatchdogTick,
+			watchdogBufSize: defaultBufSize,
 		},
 	}
 }
