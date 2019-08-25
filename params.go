@@ -72,6 +72,14 @@ func (s *Sync) addRoutine() {
 	s.nbReceivers++
 }
 
+// alertVars Analysis related parameters
+type alertVars struct {
+	span            time.Duration // Time (seconds) frame to monitor (and retain) traffic behaviour
+	threshold       int           // Number of request over time frame (hits/span) that will trigger an alert
+	watchdogTick    time.Duration // Period (milliseconds, preferably) over which to check for alerts
+	watchdogBufSize uint          // Size of the channel used to receive hit notification. Make it arbitrarily high. TODO: There may be a better way to do this
+}
+
 // Parameters holds the application's parameters it runs on
 type Parameters struct {
 
@@ -84,11 +92,7 @@ type Parameters struct {
 	DisplayRefresh time.Duration // Period (seconds) to renew display print, thus also used for capture and reporting
 	DisplayType    string        // Type of display output
 
-	// Analysis related parameters
-	AlertSpan       time.Duration // Time (seconds) frame to monitor (and retain) traffic behaviour
-	AlertThreshold  int           // Number of request over time frame (hits/span) that will trigger an alert
-	WatchdogTick    time.Duration // Period (milliseconds, preferably) over which to check for alerts
-	WatchdogBufSize uint          // Size of the channel used to receive hit notification. Make it arbitrarily high. TODO: There may be a better way to do this
+	alert	alertVars
 }
 
 // LoadParams loads the application's parameters it should run on into an object and returns it
@@ -110,9 +114,11 @@ func LoadParams() *Parameters {
 		RequestedInterfaces: nil,
 		DisplayRefresh:      defDisplayRefresh,
 		DisplayType:         defDisplayType,
-		AlertSpan:           defAlertSpan,
-		AlertThreshold:      defAlertThreshold,
-		WatchdogTick:        defaultWatchdogTick,
-		WatchdogBufSize:     defaultBufSize,
+		alert:alertVars{
+			span:                defAlertSpan,
+			threshold:           defAlertThreshold,
+			watchdogTick:        defaultWatchdogTick,
+			watchdogBufSize:     defaultBufSize,
+		},
 	}
 }

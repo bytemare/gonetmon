@@ -148,13 +148,13 @@ func NewWatchdog(parameters *Parameters, c chan<- alertMsg, syn *Sync) *Watchdog
 
 	dog := &Watchdog{
 		cache: hitCache{
-			push:    make(chan time.Time, parameters.WatchdogBufSize),
-			bufSize: parameters.WatchdogBufSize,
+			push:    make(chan time.Time, parameters.alert.watchdogBufSize),
+			bufSize: parameters.alert.watchdogBufSize,
 			list:    list.List{},
 		},
-		timeFrame: parameters.AlertSpan,
-		tick:      parameters.WatchdogTick,
-		threshold: parameters.AlertThreshold,
+		timeFrame: parameters.alert.span,
+		tick:      parameters.alert.watchdogTick,
+		threshold: parameters.alert.threshold,
 		alertChan: c,
 		alert:     false,
 		syn:       syn,

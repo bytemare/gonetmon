@@ -29,10 +29,10 @@ const (
 func buildAlertBarOutput(r *Report, p *Parameters) string {
 	var output string
 	hits := strconv.Itoa(r.WatchdogHits)
-	if r.WatchdogHits >= p.AlertThreshold {
+	if r.WatchdogHits >= p.alert.threshold {
 		hits = red + hits + stop
 	}
-	output += fmt.Sprintf(reportAlert, hits, p.AlertThreshold, p.AlertSpan)
+	output += fmt.Sprintf(reportAlert, hits, p.alert.threshold, p.alert.span)
 	return output
 }
 
@@ -78,7 +78,7 @@ func min(a int, b int) int {
 func displayToConsole(r *Report, alerts *[]string, p *Parameters) {
 	var output string
 
-	output += fmt.Sprintf(topLine+"\n", int(p.DisplayRefresh.Seconds()), p.AlertThreshold, int(p.AlertSpan.Seconds()), time.Now().Format("2006-01-02 15:04:05"))
+	output += fmt.Sprintf(topLine+"\n", int(p.DisplayRefresh.Seconds()), p.alert.threshold, int(p.alert.span.Seconds()), time.Now().Format("2006-01-02 15:04:05"))
 	output += buildAlertBarOutput(r, p) + "\n"
 	if r.topHost == nil {
 		output += noReport + "\n"
