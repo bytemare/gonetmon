@@ -44,4 +44,4 @@ script:
   - go run RealTraffic/RealTraffic.go &> /dev/null & sudo ./sniffer -timeout=200
 
 after_success:
-  - sonar-scanner
+  - cd ../ && sonar-scanner
